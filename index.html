@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Life – Simulation de carrière</title>
+<style>
+:root{--bg:#0b1a12;--card:#12281c;--card2:#183524;--line:#25503a;--txt:#eaf6ee;--mut:#8fb5a0;--acc:#2ee37a;--gold:#f5c542;--red:#ff6b6b;--blue:#4cc3ff}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(circle at top,#14402a 0,#0b1a12 55%) fixed;color:var(--txt);min-height:100vh;line-height:1.45;overflow-anchor:none}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 12px 50px}
+.top{text-align:center;margin-bottom:14px}
+.top h1{font-size:1.9rem}
+.sub{color:var(--mut)}
+h2{margin-bottom:6px}
+h3{margin:12px 0 6px;color:var(--mut);font-size:.9rem;text-transform:uppercase;letter-spacing:1px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:.2s}
+.pcard:hover{transform:translateY(-3px);border-color:var(--acc)}
+.pcard .fl{font-size:2.2rem}
+.pcard h4{margin:4px 0 2px}
+.pcard small{color:var(--mut);display:block}
+.pt{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.pill{background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:2px 9px;font-size:.78rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.hud{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.id{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.id .flag{font-size:2.4rem}
+.id p{color:var(--mut);font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:var(--card2);border-radius:10px;padding:7px 10px}
+.stat.big b{display:block;font-size:1rem}
+.stat.big span,.sl span{color:var(--mut);font-size:.75rem}
+.sl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.bar{height:6px;background:#0b1a12;border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:9px}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.layout{display:grid;grid-template-columns:1fr 270px;gap:12px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+#main{min-height:520px}
+.tag{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:2px 12px;font-size:.8rem;margin-bottom:8px;color:var(--acc)}
+.txt{font-size:1rem;margin:8px 0 12px}
+.choices{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.choice{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;font-size:.98rem;cursor:pointer;transition:.15s}
+.choice:hover:not(:disabled){border-color:var(--acc);background:#1d4430}
+.choice:disabled{opacity:.45;cursor:not-allowed}
+.btn{background:var(--acc);color:#04210f;border:0;border-radius:12px;padding:11px 18px;font-weight:700;font-size:.95rem;cursor:pointer;margin:3px 5px 3px 0}
+.btn:hover{filter:brightness(1.1)}
+.btn.small{padding:7px 12px;font-size:.85rem}
+.btn.alt{background:var(--gold)}
+.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border-radius:99px;padding:3px 11px;font-size:.82rem;font-weight:600;background:var(--card2)}
+.chip.up{color:var(--acc);border:1px solid var(--acc)}
+.chip.down{color:var(--red);border:1px solid var(--red)}
+.offers{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.offer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.offer small{color:var(--mut)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.opt{background:var(--card2);color:var(--txt);border:2px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;text-align:left}
+.opt.sel{border-color:var(--gold);background:#2a3a1c}
+.opt small{color:var(--mut)}
+table{width:100%;border-collapse:collapse;margin:8px 0 12px}
+td{padding:6px 4px;border-bottom:1px solid var(--line)}
+td:last-child{text-align:right;font-weight:600}
+#log{list-style:none;font-size:.85rem;color:var(--mut)}
+#log li{padding:6px 0;border-bottom:1px solid var(--line)}
+.big-title{font-size:1.7rem;color:var(--gold);margin:6px 0}
+.board{display:flex;align-items:center;justify-content:space-around;gap:10px;background:linear-gradient(135deg,#0e3b22,#14522f);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;text-align:center}
+.board span{font-size:1.8rem;display:block}
+.board small{color:var(--mut);display:block;font-size:.82rem}
+.board .sc{font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:2px}
+.mstat{color:var(--mut);font-size:.85rem;margin-bottom:8px}
+.ln{padding:7px 11px;margin-bottom:6px;border-left:3px solid var(--line);background:var(--card2);border-radius:0 10px 10px 0;font-size:.95rem}
+.ln.goal{border-left-color:var(--acc)}
+.ln.bad{border-left-color:var(--red)}
+.ln.sys{border-left-color:var(--gold)}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:50;overflow:auto;padding:14px 8px}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;max-width:920px;margin:0 auto;padding:14px}
+.mh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tabs{display:flex;gap:5px;flex-wrap:wrap}
+.tb{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:99px;padding:5px 11px;cursor:pointer;font-size:.82rem}
+.tb.on{background:var(--acc);color:#04210f;font-weight:700}
+table.lt{font-size:.85rem;margin:4px 0 10px}
+.lt th{color:var(--mut);text-align:right;padding:4px 3px;border-bottom:1px solid var(--line)}
+.lt td{padding:4px 3px;text-align:right;font-weight:400}
+.lt td:nth-child(2),.lt th:nth-child(2){text-align:left}
+.lt tr.me{background:#1d4430;font-weight:700}
+.lt tr.z-m td:first-child{border-left:4px solid var(--acc)}
+.lt tr.z-s td:first-child{border-left:4px solid var(--blue)}
+.lt tr.z-t td:first-child{border-left:4px solid var(--gold)}
+.lt tr.z-rel td:first-child{border-left:4px solid var(--red)}
+.lt tr.z-pro td:first-child{border-left:4px solid var(--acc)}
+select,input[type=text]{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.95rem;margin:0 6px 6px 0}
+.form{display:flex;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>⚽ Football Life</h1>
+    <p class="sub">Mène un jeune talent jusqu'au sommet : clubs, coupes, sélection, argent, famille, réseaux.</p>
+  </header>
+
+  <section id="start">
+    <h2>Choisis ton joueur</h2>
+    <div id="resume"></div>
+    <div id="players" class="grid"></div>
+    <div class="card" style="margin-top:16px">
+      <h2>✨ Créer mon joueur</h2>
+      <div class="form">
+        <input id="cn" type="text" placeholder="Nom du joueur" maxlength="30">
+        <select id="cnat"></select>
+        <select id="cpos"><option value="att">Attaquant</option><option value="ail">Ailier</option><option value="mil">Milieu</option><option value="def">Défenseur</option></select>
+        <button class="btn" onclick="createPlayer()">Créer et jouer</button>
+      </div>
+      <p class="mstat">Ton joueur débute en 2e division du pays de sa nationalité (ou d'un pays de son continent).</p>
+    </div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="nav">
+      <button class="btn small ghost" onclick="openTab('lg')">📊 Classements</button>
+      <button class="btn small ghost" onclick="openTab('wd')">🗺️ Championnats du monde</button>
+      <button class="btn small ghost" onclick="openTab('fin')">💰 Finances</button>
+      <button class="btn small ghost" onclick="openTab('soc')">📱 Réseaux & sponsors</button>
+      <button class="btn small ghost" onclick="openTab('vie')">💞 Vie privée</button>
+      <button class="btn small ghost" onclick="openTab('pal')">🏅 Palmarès</button>
+      <button class="btn small ghost" onclick="openTab('mer')">🔄 Mercato mondial</button>
+    </div>
+    <div class="hud" id="hud"></div>
+    <div class="layout">
+      <div class="card" id="main"></div>
+      <aside class="card"><h3 style="margin-top:0">Journal</h3><ul id="log"></ul></aside>
+    </div>
+  </section>
+</div>
+<div id="modal" hidden></div>
+
+<script>
+/* ================= OUTILS ================= */
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=(a,b)=>Math.floor(rnd(a,b+1));
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fmt=n=>{const s=n<0?"-":"";n=Math.abs(n);if(n>=1e6)return s+(n/1e6).toFixed(n>=1e7?1:2).replace(".",",")+" M€";if(n>=1e3)return s+Math.round(n/1e3)+" k€";return s+Math.round(n)+" €"};
+const fmtK=k=>k>=1000?(k/1000).toFixed(1).replace(".",",")+" M":Math.round(k)+" k";
+const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
+const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+function poisson(mu,rg=Math.random){const L=Math.exp(-mu);let k=0,p=1;do{k++;p*=rg()}while(p>L&&k<14);return k-1}
+function simPair(la,lb,rg=Math.random){return[poisson(1.3*Math.exp((la-lb)/28),rg),poisson(1.0*Math.exp((lb-la)/28),rg)]}
+function simKO(la,lb){let[a,b]=simPair(la,lb),et=false,pen=false;
+  if(a===b){et=true;a+=poisson(.45*Math.exp((la-lb)/28));b+=poisson(.35*Math.exp((lb-la)/28))}
+  if(a===b){pen=true;if(Math.random()<.5+(la-lb)/300)a++;else b++}
+  return{a,b,et,pen}}
+
+/* ================= DONNÉES ================= */
+const POS={att:"Attaquant",ail:"Ailier",mil:"Milieu",def:"Défenseur"};
+const GOALF={att:26,ail:17,mil:9,def:3};
+const CATS={car:"⚽ Carrière",arg:"💰 Finances",cou:"❤️ Couple",fam:"👨‍👩‍👧 Famille",vie:"🎉 Vie de star"};
+
+/* id, nom, drapeau, continent, D1, D2, niveau du meilleur club, niveau du dernier de D1, "clubs D1;clubs D2" (ajoute une ligne pour ajouter un pays) */
+const CT=[
+["FR","France","🇫🇷","EU","Ligue 1","Ligue 2",86,60,"Paris Saint-Germain,AS Monaco,Olympique de Marseille,Olympique Lyonnais,LOSC Lille,OGC Nice,RC Lens,Stade Rennais,Stade Brestois,FC Nantes,RC Strasbourg,Stade de Reims,FC Toulouse,Montpellier HSC;AJ Auxerre,Le Havre AC,SCO Angers,FC Metz,FC Lorient,AS Saint-Étienne,Girondins de Bordeaux,SM Caen,EA Guingamp,Paris FC"],
+["EN","Angleterre","🏴󠁧󠁢󠁥󠁮󠁧󠁿","EU","Premier League","Championship",90,62,"Manchester City,Liverpool,Arsenal,Chelsea,Manchester United,Tottenham,Newcastle United,Aston Villa,Brighton,West Ham,Crystal Palace,Fulham,Everton,Leicester City;Leeds United,Sheffield United,Southampton,Norwich City,Sunderland,West Bromwich,Middlesbrough,Burnley,Stoke City,Coventry City"],
+["ES","Espagne","🇪🇸","EU","LaLiga","LaLiga 2",90,60,"Real Madrid,FC Barcelone,Atlético de Madrid,Athletic Bilbao,Real Sociedad,FC Séville,Villarreal,Valence CF,Real Betis,Girona FC,Celta Vigo,Osasuna,Getafe,Rayo Vallecano;Deportivo La Corogne,Real Saragosse,Málaga CF,Elche CF,Real Oviedo,Levante UD,Sporting Gijón,CD Tenerife,Racing Santander,Cadix CF"],
+["IT","Italie","🇮🇹","EU","Serie A","Serie B",86,58,"Inter Milan,Juventus,AC Milan,Naples,AS Rome,Atalanta,Lazio,Fiorentina,Bologne,Torino,Genoa,Udinese,Sassuolo,Cagliari;Parme,Palerme,Sampdoria,Venise,Bari,Cremonese,Brescia,Spezia,Cosenza,Pise"],
+["DE","Allemagne","🇩🇪","EU","Bundesliga","2. Bundesliga",88,58,"Bayern Munich,Bayer Leverkusen,Borussia Dortmund,RB Leipzig,Eintracht Francfort,VfB Stuttgart,VfL Wolfsburg,SC Fribourg,Gladbach,Werder Brême,Hoffenheim,Mayence 05,FC Augsbourg,Union Berlin;Schalke 04,Hambourg SV,Hertha Berlin,FC Cologne,Hanovre 96,FC Nuremberg,Fortuna Düsseldorf,Kaiserslautern,Karlsruher SC,Greuther Fürth"],
+["PT","Portugal","🇵🇹","EU","Liga Portugal","Liga Portugal 2",78,50,"Benfica,FC Porto,Sporting CP,SC Braga,Vitória Guimarães,Famalicão,Estoril Praia,Moreirense,Gil Vicente,Rio Ave,Boavista,Casa Pia,Arouca,Santa Clara;Nacional,Marítimo,Farense,Vizela,Tondela,Académica,Portimonense,Leixões,Chaves,Penafiel"],
+["NL","Pays-Bas","🇳🇱","EU","Eredivisie","Eerste Divisie",78,50,"Ajax Amsterdam,PSV Eindhoven,Feyenoord,AZ Alkmaar,FC Twente,FC Utrecht,Sparta Rotterdam,Go Ahead Eagles,NEC Nimègue,SC Heerenveen,Fortuna Sittard,PEC Zwolle,FC Groningue,Heracles Almelo;Willem II,ADO La Haye,Cambuur,Roda JC,De Graafschap,Almere City,VVV-Venlo,Excelsior,FC Den Bosch,FC Emmen"],
+["BE","Belgique","🇧🇪","EU","Pro League","Challenger Pro League",74,48,"Club Bruges,Union Saint-Gilloise,RSC Anderlecht,KRC Genk,Standard Liège,KAA Gent,Royal Antwerp,Cercle Bruges,KV Malines,Charleroi,Saint-Trond,Westerlo;Beveren,Lommel,Seraing,Zulte Waregem,Eupen,Beerschot,Lokeren,Waasland"],
+["TR","Turquie","🇹🇷","EU","Süper Lig","1. Lig",74,48,"Galatasaray,Fenerbahçe,Beşiktaş,Trabzonspor,Başakşehir,Adana Demirspor,Konyaspor,Antalyaspor,Sivasspor,Alanyaspor,Kayserispor,Rizespor;Bursaspor,Samsunspor,Eskişehirspor,Gençlerbirliği,Ankaragücü,Bodrumspor,Altay,Karagümrük"],
+["CH","Suisse","🇨🇭","EU","Super League","Challenge League",66,44,"Young Boys,FC Bâle,Servette,FC Zurich,FC Lugano,FC Lucerne,FC Saint-Gall,Grasshopper,FC Sion,FC Winterthour,Yverdon,FC Lausanne;Aarau,Thoune,Neuchâtel Xamax,Schaffhouse,FC Wil,FC Vaduz,Stade Lausanne-Ouchy,Étoile Carouge"],
+["GR","Grèce","🇬🇷","EU","Super League 1","Super League 2",66,44,"Olympiakos,Panathinaikos,AEK Athènes,PAOK Salonique,Aris Salonique,Volos,Atromitos,OFI Crète,Lamia,Asteras Tripolis,Panserraikos,Levadiakos;Ionikos,Apollon Smyrnis,Kallithea,Panachaiki,Iraklis,Xanthi,Veria,Kerkyra"],
+["SC","Écosse","🏴󠁧󠁢󠁳󠁣󠁴󠁿","EU","Premiership","Championship écossais",64,42,"Celtic,Rangers,Hearts,Aberdeen,Hibernian,Dundee United,Motherwell,Kilmarnock,St Mirren,Livingston,Ross County,St Johnstone;Dundee,Partick Thistle,Raith Rovers,Ayr United,Queens Park,Morton,Airdrieonians,Hamilton"],
+["NO","Norvège","🇳🇴","EU","Eliteserien","OBOS-ligaen",62,42,"Bodø/Glimt,Molde,Brann,Rosenborg,Viking,Lillestrøm,Tromsø,Strømsgodset,Sarpsborg 08,Haugesund,Odd,Kristiansund;Start,Sandefjord,Aalesund,Stabæk,Vålerenga,Sogndal,Raufoss,Ranheim"],
+["CI","Côte d'Ivoire","🇨🇮","AF","Ligue 1 ivoirienne","Ligue 2 ivoirienne",60,44,"ASEC Mimosas,Africa Sports,Stella Club d'Adjamé,SO de l'Armée,San Pédro FC,Stade d'Abidjan,SC Gagnoa,Racing Club d'Abidjan,Bouaké FC,Lys Sassandra,Séwé Sport,SC Bouaflé;Williamsville AC,Zoman FC,AS Denguélé,US Yamoussoukro,ASI Abengourou,AS Tanda,Académie Sol Beni,FC Bondoukou"],
+["NG","Nigéria","🇳🇬","AF","NPFL","Nigeria National League",58,42,"Enyimba,Rivers United,Remo Stars,Kano Pillars,Shooting Stars,Plateau United,Lobi Stars,Bendel Insurance,Sunshine Stars,Heartland,Abia Warriors,Nasarawa United;Sporting Lagos,Kwara United,Warri Wolves,Niger Tornadoes,Jigawa Golden Stars,El-Kanemi Warriors,Ikorodu City,Doma United"],
+["MA","Maroc","🇲🇦","AF","Botola Pro","Botola 2",64,46,"Wydad Casablanca,Raja Casablanca,AS FAR Rabat,RS Berkane,FUS Rabat,Maghreb de Fès,Hassania Agadir,Difaâ El Jadida,Olympic Safi,Renaissance Zemamra,Moghreb Tétouan,Ittihad Tanger;Kawkab Marrakech,Rapide Oued Zem,Chabab Mohammédia,Union Touarga,Olympique Khouribga,Racing Casablanca,Youssoufia Berrechid,Jeunesse Massira"],
+["EG","Égypte","🇪🇬","AF","Premier League égyptienne","Deuxième division égyptienne",66,46,"Al Ahly,Zamalek,Pyramids FC,Al Masry,Ceramica Cleopatra,Future FC,ENPPI,Smouha,Ismaily,Al Ittihad Alexandrie,Pharco FC,Tala'ea El Gaish;Haras El Hodoud,Ghazl El Mahalla,Aswan SC,Misr Lel Makkasa,Baladiyat El Mahalla,El Qanah,Telecom Egypt,Petrojet"],
+["SN","Sénégal","🇸🇳","AF","Ligue 1 sénégalaise","Ligue 2 sénégalaise",56,42,"Génération Foot,AS Jaraaf,Casa Sports,Teungueth FC,AS Pikine,Diambars,Guédiawaye FC,Stade de Mbour,Linguère,Dakar Sacré-Cœur,US Ouakam,Mbour PC;AS Douanes,US Gorée,Jamono Fatick,Niary Tally,AS Kaffrine,Thiès FC,Saint-Louis FC,Ziguinchor FC"],
+["DZ","Algérie","🇩🇿","AF","Ligue 1 algérienne","Ligue 2 algérienne",58,44,"CR Belouizdad,USM Alger,JS Kabylie,MC Alger,ES Sétif,CS Constantine,Paradou AC,MC Oran,JS Saoura,US Biskra,NC Magra,ASO Chlef;Olympique Akbou,MC El Bayadh,USM Annaba,WA Tlemcen,RC Arbaâ,Hussein Dey,Olympique Médéa,CA Bordj Bou Arreridj"],
+["TN","Tunisie","🇹🇳","AF","Ligue 1 tunisienne","Ligue 2 tunisienne",58,44,"Espérance de Tunis,Club Africain,Étoile du Sahel,CS Sfaxien,US Monastir,Stade Tunisien,AS Soliman,US Ben Guerdane,CA Bizertin,ES Zarzis,Olympique Béja,JS Kairouan;AS Gabès,Stade Gabésien,El Gawafel Gafsa,US Tataouine,AS Marsa,Jendouba Sport,CS Hammam-Lif,AS Djerba"],
+["GH","Ghana","🇬🇭","AF","Premier League ghanéenne","Division One ghanéenne",52,40,"Asante Kotoko,Hearts of Oak,Medeama,Aduana Stars,Bechem United,Nsoatreman,Dreams FC,Samartex,Berekum Chelsea,Legon Cities,Heart of Lions,Karela United;Accra Lions,Great Olympics,Real Tamale United,King Faisal,Hasaacas,Elmina Sharks,Inter Allies,Tema Youth"],
+["CM","Cameroun","🇨🇲","AF","Elite One","Elite Two",52,40,"Coton Sport,Canon Yaoundé,Union Douala,Fovu Club,Bamboutos FC,Colombe Sportive,PWD Bamenda,Stade Renard,Avion Académie,Victoria United,Eding Sport,Yong Sports;Astres FC,Racing Bafoussam,Léopards Douala,Fauve Azur,Tonnerre Yaoundé,Unisport Bafang,Mount Cameroon,Njalla Quan"],
+["ZA","Afrique du Sud","🇿🇦","AF","Betway Premiership","Motsepe Foundation Championship",62,44,"Mamelodi Sundowns,Orlando Pirates,Kaizer Chiefs,Stellenbosch FC,SuperSport United,Cape Town City,AmaZulu,Sekhukhune United,Richards Bay,Royal AM,Golden Arrows,TS Galaxy;Chippa United,Marumo Gallants,Polokwane City,Magesi FC,Moroka Swallows,Cape Town Spurs,Black Leopards,Jomo Cosmos"],
+["BR","Brésil","🇧🇷","AMS","Brasileirão Série A","Brasileirão Série B",84,58,"Flamengo,Palmeiras,Botafogo,Atlético Mineiro,São Paulo,Fluminense,Corinthians,Internacional,Grêmio,Cruzeiro,Vasco da Gama,Bahia,Fortaleza,Santos;Sport Recife,Ceará,Goiás,Coritiba,Avaí,Ponte Preta,Guarani,Vila Nova,CRB,Náutico"],
+["AR","Argentine","🇦🇷","AMS","Liga Profesional","Primera Nacional",78,54,"River Plate,Boca Juniors,Racing Club,Independiente,San Lorenzo,Estudiantes,Vélez Sarsfield,Talleres,Lanús,Rosario Central,Newell's Old Boys,Argentinos Juniors,Defensa y Justicia,Huracán;Banfield,Tigre,Platense,Atlético Tucumán,Belgrano,Colón,Gimnasia La Plata,Quilmes,Chacarita Juniors,Nueva Chicago"],
+["UY","Uruguay","🇺🇾","AMS","Primera División uruguayenne","Segunda División uruguayenne",66,46,"Peñarol,Nacional,Defensor Sporting,Liverpool Montevideo,Danubio,River Plate Montevideo,Montevideo Wanderers,Cerro Largo,Boston River,Plaza Colonia,Racing Montevideo,Progreso;Cerro,Rampla Juniors,Fénix,Juventud,Miramar Misiones,Albion,Torque,Sud América"],
+["CO","Colombie","🇨🇴","AMS","Liga BetPlay","Torneo BetPlay",66,46,"Atlético Nacional,Millonarios,Junior Barranquilla,América de Cali,Deportivo Cali,Santa Fe,Once Caldas,Deportes Tolima,Independiente Medellín,Bucaramanga,Envigado,La Equidad;Cúcuta Deportivo,Real Cartagena,Atlético Huila,Boyacá Chicó,Patriotas,Llaneros,Unión Magdalena,Deportivo Pereira"],
+["CL","Chili","🇨🇱","AMS","Primera División chilienne","Primera B chilienne",64,46,"Colo-Colo,Universidad de Chile,Universidad Católica,Huachipato,Palestino,Cobresal,Unión La Calera,Audax Italiano,Ñublense,Everton de Viña,O'Higgins,Coquimbo Unido;Deportes Iquique,Santiago Wanderers,Magallanes,Deportes Temuco,Curicó Unido,Rangers de Talca,San Luis,Deportes La Serena"],
+["EC","Équateur","🇪🇨","AMS","LigaPro","Serie B équatorienne",60,44,"LDU Quito,Independiente del Valle,Barcelona SC,Emelec,El Nacional,Aucas,Delfín,Orense,Deportivo Cuenca,Macará,Técnico Universitario,Mushuc Runa;Guayaquil City,Olmedo,Manta FC,Gualaceo,Imbabura,Libertad FC,Cumbayá,Deportivo Quito"],
+["US","États-Unis","🇺🇸","AMN","MLS","USL Championship",66,46,"Inter Miami,LAFC,LA Galaxy,Seattle Sounders,Columbus Crew,Atlanta United,New York City FC,FC Cincinnati,Philadelphia Union,Orlando City,Portland Timbers,Austin FC;Louisville City,Phoenix Rising,San Antonio FC,Sacramento Republic,Tampa Bay Rowdies,Charleston Battery,Pittsburgh Riverhounds,Birmingham Legion"],
+["MX","Mexique","🇲🇽","AMN","Liga MX","Liga de Expansión MX",70,48,"Club América,Chivas Guadalajara,Cruz Azul,Tigres UANL,Monterrey,Pumas UNAM,Toluca,Santos Laguna,Club León,Pachuca,Atlas,Necaxa;Tapatío,Atlante,Celaya,Cancún FC,Tepatitlán,Mineros de Zacatecas,Venados,Dorados"],
+["CR","Costa Rica","🇨🇷","AMN","Primera División costaricienne","Liga de Ascenso costaricienne",52,40,"Deportivo Saprissa,LD Alajuelense,CS Herediano,Cartaginés,Santos de Guápiles,Municipal Grecia,Sporting FC,Guadalupe FC,Puntarenas FC,Pérez Zeledón,Jicaral,Limón FC;Escazuceña,Turrialba,Belén FC,Barrio México,Aserrí,Liberia,Zeledón,San Carlos"],
+["JP","Japon","🇯🇵","AS","J1 League","J2 League",68,50,"Vissel Kobe,Yokohama F. Marinos,Kawasaki Frontale,Urawa Reds,Sanfrecce Hiroshima,Gamba Osaka,Kashima Antlers,Cerezo Osaka,FC Tokyo,Nagoya Grampus,Kashiwa Reysol,Avispa Fukuoka;Shimizu S-Pulse,Júbilo Iwata,Ventforet Kofu,Montedio Yamagata,Tokushima Vortis,Albirex Niigata,Fagiano Okayama,Roasso Kumamoto"],
+["KR","Corée du Sud","🇰🇷","AS","K League 1","K League 2",64,48,"Ulsan HD,Jeonbuk Hyundai,FC Seoul,Pohang Steelers,Suwon Samsung,Daegu FC,Incheon United,Gangwon FC,Jeju United,Gwangju FC,Daejeon Hana,Suwon FC;Busan IPark,Seongnam FC,Bucheon FC,Ansan Greeners,Gimpo FC,Chungnam Asan,Jeonnam Dragons,Gyeongnam FC"],
+["SA","Arabie saoudite","🇸🇦","AS","Saudi Pro League","Division 1 saoudienne",74,52,"Al-Hilal,Al-Nassr,Al-Ittihad,Al-Ahli,Al-Shabab,Al-Taawoun,Al-Fateh,Al-Ettifaq,Damac,Al-Fayha,Al-Raed,Al-Okhdood;Al-Qadsiah,Al-Kholood,Al-Orobah,Al-Adalah,Al-Batin,Al-Hazem,Al-Tai,Abha Club"],
+["QA","Qatar","🇶🇦","AS","Stars League","Qatar Second Division",56,42,"Al Sadd,Al-Duhail,Al Rayyan,Al-Gharafa,Al Arabi,Al-Wakrah,Umm Salal,Al-Sailiya,Qatar SC,Al-Shamal,Al-Khor,Al-Markhiya;Muaither,Al-Shahania,Al-Ahli Doha,Al-Mesaimeer,Al-Kharaitiyat,Lusail SC,Al-Waab,Al-Bidda"],
+["CN","Chine","🇨🇳","AS","Super League chinoise","China League One",56,40,"Shanghai Port,Shandong Taishan,Chengdu Rongcheng,Beijing Guoan,Shanghai Shenhua,Zhejiang FC,Tianjin Jinmen Tiger,Henan FC,Wuhan Three Towns,Changchun Yatai,Qingdao West Coast,Meizhou Hakka;Guangzhou FC,Dalian Pro,Jiangsu FC,Hebei FC,Nantong Zhiyun,Shenzhen FC,Chongqing Liangjiang,Yunnan Yukun"],
+["AU","Australie","🇦🇺","AS","A-League","NPL australienne",56,42,"Melbourne City,Sydney FC,Melbourne Victory,Western Sydney Wanderers,Central Coast Mariners,Adelaide United,Brisbane Roar,Macarthur FC,Wellington Phoenix,Newcastle Jets,Perth Glory,Western United;Sydney United,Avondale FC,Heidelberg United,South Melbourne,Blacktown City,APIA Leichhardt,Wollongong Wolves,Preston Lions"],
+["NZ","Nouvelle-Zélande","🇳🇿","OC","National League NZ","Championnats régionaux NZ",44,34,"Auckland City,Waitakere United,Team Wellington,Eastern Suburbs,Hamilton Wanderers,Napier City Rovers,Birkenhead United,Cashmere Technical,Miramar Rangers,Wellington Olympic,Western Suburbs,Tasman United;Onehunga Sports,Melville United,Hibiscus Coast,Northern Rovers,Selwyn United,Nelson Suburbs,Petone FC,Glenfield Rovers"]
+];
+
+/* Sélections nationales : nom, drapeau, continent, niveau */
+const NTS=[["France","🇫🇷","EU",88],["Angleterre","🏴󠁧󠁢󠁥󠁮󠁧󠁿","EU",88],["Espagne","🇪🇸","EU",88],["Allemagne","🇩🇪","EU",85],["Portugal","🇵🇹","EU",85],["Italie","🇮🇹","EU",83],["Pays-Bas","🇳🇱","EU",82],["Belgique","🇧🇪","EU",80],["Croatie","🇭🇷","EU",79],["Danemark","🇩🇰","EU",75],["Suisse","🇨🇭","EU",74],["Norvège","🇳🇴","EU",74],["Turquie","🇹🇷","EU",74],["Serbie","🇷🇸","EU",72],["Écosse","🏴󠁧󠁢󠁳󠁣󠁴󠁿","EU",70],["Grèce","🇬🇷","EU",68],
+["Maroc","🇲🇦","AF",80],["Sénégal","🇸🇳","AF",77],["Côte d'Ivoire","🇨🇮","AF",74],["Nigéria","🇳🇬","AF",74],["Égypte","🇪🇬","AF",73],["Algérie","🇩🇿","AF",73],["Cameroun","🇨🇲","AF",71],["Tunisie","🇹🇳","AF",70],["Ghana","🇬🇭","AF",69],["Mali","🇲🇱","AF",69],["Afrique du Sud","🇿🇦","AF",66],["RD Congo","🇨🇩","AF",66],
+["Argentine","🇦🇷","AMS",90],["Brésil","🇧🇷","AMS",89],["Uruguay","🇺🇾","AMS",82],["Colombie","🇨🇴","AMS",80],["Équateur","🇪🇨","AMS",74],["Chili","🇨🇱","AMS",72],["Paraguay","🇵🇾","AMS",70],["Pérou","🇵🇪","AMS",68],["Venezuela","🇻🇪","AMS",66],["Bolivie","🇧🇴","AMS",60],
+["États-Unis","🇺🇸","AMN",77],["Mexique","🇲🇽","AMN",76],["Canada","🇨🇦","AMN",72],["Costa Rica","🇨🇷","AMN",65],["Panama","🇵🇦","AMN",64],["Jamaïque","🇯🇲","AMN",62],
+["Japon","🇯🇵","AS",80],["Corée du Sud","🇰🇷","AS",77],["Iran","🇮🇷","AS",75],["Australie","🇦🇺","AS",73],["Arabie saoudite","🇸🇦","AS",70],["Qatar","🇶🇦","AS",66],["Ouzbékistan","🇺🇿","AS",66],["Irak","🇮🇶","AS",65],
+["Nouvelle-Zélande","🇳🇿","OC",56],["Fidji","🇫🇯","OC",44],["Papouasie-Nouvelle-Guinée","🇵🇬","OC",42],["Îles Salomon","🇸🇧","OC",42]
+].map(([n,f,k,l])=>({n,f,k,l}));
+const NTM={};NTS.forEach(x=>NTM[x.n]=x);
+
+const COMPS={EU:{m:"Ligue des champions",s:"Ligue Europa",t:"Ligue Conférence"},AF:{m:"Ligue des champions CAF",s:"Coupe de la Confédération"},AMS:{m:"Copa Libertadores",s:"Copa Sudamericana"},AMN:{m:"Ligue des champions CONCACAF"},AS:{m:"Ligue des champions AFC",s:"AFC Champions League Two"},OC:{m:"Ligue des champions OFC"}};
+
+/* Monde : clubs de chaque pays (D1 + D2) */
+const WORLD={},RANK={};
+CT.forEach(([id,n,f,k,d1n,d2n,t,b,cl])=>{
+  const[A,B]=cl.split(";").map(x=>x.split(",")),clubs=[];
+  A.forEach((nm,i)=>{const l=Math.round(b+(t-b)*Math.pow((A.length-1-i)/(A.length-1),1.4)+(mulberry(hash(id+nm))()-.5)*3);clubs.push({n:nm,c:id,d:1,l0:l,l})});
+  B.forEach((nm,j)=>{const l=Math.round(b-2-(j/(B.length-1))*10+(mulberry(hash(id+nm))()-.5)*3);clubs.push({n:nm,c:id,d:2,l0:l,l})});
+  WORLD[id]={id,n,f,k,d1n,d2n,t,b,clubs};
+});
+Object.values(WORLD).forEach(w=>{RANK[w.id]=Object.values(WORLD).filter(x=>x.k===w.k&&x.t>w.t).length});
+
+function slots(id){const k=WORLD[id].k,r=RANK[id];
+  if(k==="EU")return r<5?{m:4,s:2,t:1}:r<9?{m:2,s:1,t:1}:{m:1,s:1,t:1};
+  if(k==="AF")return r<4?{m:2,s:2}:{m:1,s:1};
+  if(k==="AMS")return r<2?{m:4,s:3}:{m:2,s:2};
+  if(k==="AMN")return{m:2};
+  if(k==="AS")return r<3?{m:2,s:2}:{m:1,s:1};
+  return{m:1}}
+
+const PLAYERS=[
+ {name:"Konaté Zhana",nat:"Brésil",natTeam:"Brésil",flag:"🇨🇮🇧🇷",pos:"att",age:17,ovr:63,pot:94,cc:"BR",bio:"Jeune Ivoiro-Brésilien : technique brésilienne, puissance ivoirienne. Il joue pour le Brésil."},
+ {name:"André Jean Sylvestre",nat:"Côte d'Ivoire",flag:"🇨🇮",pos:"att",age:18,ovr:62,pot:91,cc:"CI",bio:"Attaquant ivoirien opportuniste, un vrai renard des surfaces."},
+ {name:"Amié Jean Christ",nat:"Côte d'Ivoire",flag:"🇨🇮",pos:"def",age:18,ovr:61,pot:89,cc:"CI",bio:"Défenseur ivoirien solide, leader de sa défense."},
+ {name:"Djomo Emou",nat:"Côte d'Ivoire",flag:"🇨🇮",pos:"mil",age:17,ovr:62,pot:90,cc:"CI",bio:"Milieu ivoirien, récupérateur infatigable et bon passeur."},
+ {name:"Mateo Alvarez",nat:"Argentine",flag:"🇦🇷",pos:"att",age:17,ovr:62,pot:93,cc:"AR",bio:"Dribbleur instinctif, formé dans les rues de Rosario."},
+ {name:"Lucas Ferreira",nat:"Brésil",flag:"🇧🇷",pos:"ail",age:17,ovr:63,pot:94,cc:"BR",bio:"Ailier explosif, la samba au bout des crampons."},
+ {name:"Noah Dubois",nat:"France",flag:"🇫🇷",pos:"mil",age:18,ovr:62,pot:90,cc:"FR",bio:"Milieu complet, intelligent et très technique."},
+ {name:"Chidi Okafor",nat:"Nigéria",flag:"🇳🇬",pos:"def",age:18,ovr:61,pot:89,cc:"NG",bio:"Défenseur puissant, rapide et dur sur l'homme."},
+ {name:"Yuto Tanaka",nat:"Japon",flag:"🇯🇵",pos:"mil",age:18,ovr:61,pot:88,cc:"JP",bio:"Meneur de jeu discipliné avec une vision hors norme."},
+ {name:"Ibrahim Koné",nat:"Côte d'Ivoire",flag:"🇨🇮",pos:"ail",age:17,ovr:62,pot:91,cc:"CI",bio:"Vitesse pure et dribbles tranchants sur l'aile."},
+ {name:"Magnus Hallvard",nat:"Norvège",flag:"🇳🇴",pos:"att",age:18,ovr:60,pot:90,cc:"NO",bio:"Colosse buteur, redoutable dans la surface."},
+ {name:"Yassine El Amrani",nat:"Maroc",flag:"🇲🇦",pos:"mil",age:17,ovr:62,pot:91,cc:"MA",bio:"Milieu créatif, passes millimétrées et frappe lointaine."},
+ {name:"Jack Whitmore",nat:"Angleterre",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",pos:"ail",age:18,ovr:61,pot:89,cc:"EN",bio:"Ailier agressif, infatigable, pur produit anglais."}
+];
+
+const BRANDS=[{b:"Nike",eq:1},{b:"Adidas",eq:1},{b:"Puma",eq:1},{b:"New Balance",eq:1},{b:"Under Armour",eq:1},{b:"Coca-Cola"},{b:"Pepsi"},{b:"EA Sports"},{b:"Rolex"},{b:"Samsung"},{b:"Visa"},{b:"Emirates"}];
+const INV=[
+ {k:"immo",n:"Immobilier locatif",d:"Prudent : rendement stable, risque faible",f:()=>1+rnd(-.02,.14)},
+ {k:"bourse",n:"Bourse (ETF mondial)",d:"Moyen : entre -20 % et +28 %",f:()=>1+rnd(-.2,.28)},
+ {k:"resto",n:"Restaurants / commerces",d:"Risqué : +20 à +60 % ou perte de 10 à 50 %",f:()=>Math.random()<.55?rnd(1.2,1.6):rnd(.5,.9)},
+ {k:"acad",n:"Académie de football",d:"Moyen : bon potentiel, la réputation en profite",f:()=>Math.random()<.6?rnd(1.3,1.8):rnd(.7,1)},
+ {k:"crypto",n:"Cryptomonnaies",d:"Très risqué : x2 à x3,5 ou -60 à -90 %",f:()=>Math.random()<.45?rnd(1.8,3.5):rnd(.1,.4)},
+ {k:"startup",n:"Start-up d'un ami",d:"Quitte ou double : x3 à x5 ou tout perdre",f:()=>Math.random()<.25?rnd(3,5):rnd(0,.2)}
+];
+const SHOP=[
+ {id:"villa",n:"Villa de luxe",c:1.2,fx:{fam:6,couple:5,rep:2},as:["Villa",.04]},
+ {id:"car",n:"Supercar",c:.35,fx:{rep:3,img:2},as:["Supercar",-.12]},
+ {id:"watch",n:"Montre de luxe",c:.08,fx:{rep:1},as:["Montre",.02]},
+ {id:"yacht",n:"Yacht",c:1.6,fx:{rep:4,couple:6},as:["Yacht",-.08]},
+ {id:"prep",n:"Préparateur physique privé",c:.06,fx:{form:8,ovr:1}},
+ {id:"don",n:"Don à une association",c:.05,fx:{rep:3,img:6}},
+ {id:"fam",n:"Aider ta famille",c:.1,fx:{fam:10}}
+];
+const MULT={SA:2,CN:1.5,QA:1.5,US:1.4,EN:1.6,ES:1.4,DE:1.3,IT:1.2,FR:1.2,TR:1.2,MX:1.1};
+const FN=["Luis","Karim","Marco","Thiago","Mamadou","Jonas","Erik","Yusuf","Diego","Pierre","Hugo","Ibrahim","Kenji","Samuel","Mateus","Omar"];
+const LN=["Silva","Diallo","Rossi","Müller","Fernández","Traoré","Nilsen","Okoro","Santos","Dupont","Koné","Tanaka","Costa","Bakker","Moreau","Haddad"];
+
+/* ================= ÉVÈNEMENTS ================= */
+const D=(t,fx,msg)=>({t,ok:{fx,msg}});
+const R=(t,p,a,b)=>({t,p,ok:{fx:a[0],msg:a[1]},ko:{fx:b[0],msg:b[1]}});
+const EVENTS=[
+{id:"soiree",cat:"vie",t:g=>"Après une belle victoire, tes coéquipiers t'invitent en discothèque. Les paparazzis rôdent…",
+ ch:[R("Y aller et faire la fête",.6,[{form:-6,img:2,sal:-.01},"Belle soirée, personne ne te cause d'ennuis."],[{form:-8,img:-15,rep:-3,coach:-8},"Des vidéos de toi ivre circulent : bad buzz !"]),
+     D("Rentrer te reposer",{form:5,coach:2},"Le coach apprécie ton sérieux."),
+     D("Passer la soirée en famille",{fam:8,couple:5,form:2},"Un moment simple et précieux.")]},
+{id:"presse",cat:"vie",t:g=>"Les journalistes t'interrogent sur une rumeur de départ vers un autre club.",
+ ch:[D("Répondre calmement : « Je suis concentré sur mon club »",{rep:2,pres:3,coach:2},"Réponse propre, tout le monde apprécie."),
+     R("Répondre avec provocation",.4,[{rep:5,img:3},"Les fans adorent ton caractère !"],[{rep:-5,pres:-12,img:-8},"Polémique : le président est furieux."]),
+     D("Ne rien dire",{},"L'histoire retombe d'elle-même.")]},
+{id:"blessure",cat:"car",t:g=>"Une douleur à la cuisse apparaît à l'entraînement, juste avant un gros match.",
+ ch:[R("Jouer malgré la douleur",.5,[{form:-4,rep:2,coach:3},"Tu serres les dents et ça passe."],[{form:-25,ovr:-2,rep:-2},"La blessure s'aggrave : tu seras absent longtemps."]),
+     D("Repos complet",{form:6,coach:-2},"Tu manques le match mais tu reviens frais."),
+     D("Consulter un spécialiste privé",{sal:-.03,form:10},"Soins de pointe : tu reviens plus fort.")]},
+{id:"entrainement",cat:"car",t:g=>"Le staff te propose un programme d'entraînement supplémentaire.",
+ ch:[R("Accepter la charge de travail",.7,[{form:-4,ovr:1,coach:3},"Tu progresses nettement !"],[{form:-18},"Tu te blesses légèrement par surmenage."]),
+     D("Engager un coach privé",{sal:-.04,ovr:2,form:-3},"Le travail personnalisé paie : gros progrès !"),
+     D("Prendre du repos",{form:8},"Tu récupères mais tu ne progresses pas.")]},
+{id:"coach1",cat:"car",t:g=>"Tu enchaînes les matchs sur le banc. Tu croises le coach dans le couloir du centre d'entraînement.",
+ ch:[D("Lui demander calmement ce que tu dois améliorer",{coach:8,ovr:1},"Le coach apprécie ta maturité et te donne des conseils."),
+     R("Exiger de jouer sous peine de partir",.35,[{coach:-5,form:6,rep:2},"Le coach cède et te titularise."],[{coach:-25,pres:-8},"Le coach s'énerve et te met à l'écart."]),
+     D("Critiquer le coach dans la presse",{coach:-30,pres:-15,img:-6,rep:-3},"Le vestiaire est choqué : tu viens de te faire un ennemi puissant.")]},
+{id:"coach2",cat:"car",t:g=>"Le coach veut te faire jouer à un autre poste pour dépanner l'équipe.",
+ ch:[D("Accepter pour l'équipe",{coach:10,form:-3,rep:1},"Tu te sacrifies, le groupe t'adore."),
+     D("Refuser poliment",{coach:-8},"Il n'apprécie pas ta réponse."),
+     R("Négocier une revalorisation",.4,[{coach:3,sal:.05},"Accord trouvé !"],[{coach:-14,pres:-6},"Tu passes pour un mercenaire."])]},
+{id:"pres1",cat:"arg",t:g=>"Le président te convoque dans son bureau pour parler de ton avenir.",
+ ch:[R("Demander une revalorisation salariale",.45,[{sal:.1,pres:3},"Il accepte de t'augmenter."],[{pres:-12},"Il refuse et se montre vexé."]),
+     D("Dire que tu veux rester quoi qu'il arrive",{pres:10},"Il est touché par ta loyauté."),
+     D("Évoquer un départ si le club ne vise pas le titre",{pres:-14,rep:1},"Le président n'aime pas la pression.")]},
+{id:"pres2",cat:"vie",t:g=>"Le président est mécontent des photos de toi en soirée parues dans la presse.",
+ ch:[D("T'excuser et promettre de te recadrer",{pres:8,img:2,form:2},"Il accepte tes excuses."),
+     D("Répondre que ta vie privée ne le regarde pas",{pres:-25,coach:-8},"Il te menace d'une sanction."),
+     D("Payer une amende volontaire",{sal:-.03,pres:5},"Le geste est apprécié.")]},
+{id:"vestiaire",cat:"car",t:g=>"Une tension explose avec un coéquipier à l'entraînement : il t'insulte devant tout le monde.",
+ ch:[D("Garder ton calme",{coach:5,rep:1},"Tu prends de la hauteur."),
+     R("Répondre physiquement",.3,[{coach:-8,form:-2},"Vous êtes séparés, simple avertissement."],[{coach:-35,pres:-20,form:-4,img:-10},"Bagarre générale : tu es lourdement sanctionné !"]),
+     D("En parler au capitaine",{coach:3},"Le capitaine réconcilie tout le monde.")]},
+{id:"retard",cat:"car",t:g=>"Tu t'es réveillé en retard et tu as raté le début de l'entraînement.",
+ ch:[D("Présenter des excuses sincères",{coach:-3,form:-1},"Le coach laisse passer mais il note."),
+     R("Mentir (embouteillages)",.5,[{},"Il te croit."],[{coach:-20,pres:-8},"Il découvre le mensonge : sanction !"]),
+     D("Ne rien dire",{coach:-14,form:-2},"Le coach n'apprécie pas du tout.")]},
+{id:"sponsor",cat:"arg",cond:g=>g.rep>=15&&g.spons.length<3,
+ t:g=>{const have=g.spons.map(s=>s.b),b=pick(BRANDS.filter(x=>!have.includes(x.b)&&(!x.eq||!g.spons.some(s=>s.eq))));
+   g.tmp={b:b.b,eq:!!b.eq,amt:Math.round(Math.max(40000,g.salary*rnd(.1,.35))*(1+g.rep/100)/1000)*1000,yrs:ri(2,3)};
+   return `${b.b} te propose un contrat de publicité de ${g.tmp.yrs} ans pour ${fmt(g.tmp.amt)} par an.`},
+ ch:g=>[D("Accepter tout de suite",{addSpons:1,rep:2,img:3},`Contrat signé avec ${g.tmp.b} !`),
+        R("Négocier un meilleur contrat",.5,[{addSpons:2,rep:3},"La marque accepte : cachet augmenté de 50 % !"],[{rep:-1},"La marque se retire et choisit un autre joueur."]),
+        D("Refuser",{img:1},"Tu préfères rester libre.")]},
+{id:"badbuzz",cat:"vie",t:g=>"Un vieux message à toi ressort sur les réseaux et déclenche une polémique.",
+ ch:[D("T'excuser publiquement",{img:-3,rep:-1,pres:3},"Les excuses calment un peu la tempête."),
+     D("Ignorer",{img:-12,ig:-30,tk:-20},"Tu perds des abonnés."),
+     R("Contre-attaquer",.35,[{img:5,ig:60,tk:60},"Ta réponse devient virale en ta faveur !"],[{img:-25,rep:-5,ig:-120,tk:-80},"Polémique géante : des marques s'éloignent."])]},
+{id:"insta",cat:"vie",t:g=>"Une agence propose de gérer tes réseaux sociaux (Instagram et TikTok) contre une commission.",
+ ch:[D("Accepter",{sal:-.02,ig:80,tk:80,img:3},"Tes comptes décollent."),
+     D("Gérer toi-même",{ig:10,tk:10},"Tu publies à ton rythme.")]},
+{id:"invest",cat:"arg",t:g=>"Un ami d'enfance te propose d'investir dans sa start-up « révolutionnaire ».",
+ ch:[R("Investir gros",.4,[{sal:.6},"La start-up explose, tu gagnes une fortune !"],[{sal:-.4,rep:-1},"La start-up fait faillite, tu perds beaucoup."]),
+     D("Investir un peu",{sal:.03},"Petit investissement, petit gain."),
+     D("Refuser",{},"Tu restes prudent.")]},
+{id:"rencontre",cat:"cou",cond:g=>!g.partner,t:g=>"Lors d'un gala, tu croises quelqu'un de charmant qui n'a rien à voir avec le foot.",
+ ch:[D("Tenter ta chance",{partner:"couple",couple:30,form:2},"Le courant passe : vous commencez à vous fréquenter !"),
+     R("Sortir avec une influenceuse très médiatisée",.5,[{partner:"couple",couple:15,rep:5,ig:100,tk:100},"Un couple glamour qui fait la une des magazines."],[{rep:-3,sal:-.02,img:-5},"Elle voulait seulement de la visibilité."]),
+     D("Rester concentré sur le foot",{form:3},"Pas de distraction.")]},
+{id:"anniv",cat:"cou",cond:g=>g.partner,t:g=>"L'anniversaire de ta moitié approche. Que fais-tu ?",
+ ch:[D("Offrir un cadeau de luxe",{sal:-.06,couple:12},"Elle est aux anges."),
+     D("Organiser un dîner simple et sincère",{sal:-.01,couple:7},"Une soirée intime qui la touche."),
+     D("T'entraîner et oublier",{couple:-18,form:3},"Elle est blessée et très en colère.")]},
+{id:"crise",cat:"cou",cond:g=>g.partner&&g.couple<35,t:g=>"Ta partenaire te reproche ton absence et menace de partir.",
+ ch:[D("Consulter un thérapeute de couple",{sal:-.02,couple:16},"Vous reprenez le dialogue."),
+     D("Promettre de changer",{couple:6},"Elle veut te croire."),
+     D("Ignorer le problème",{couple:-18},"La fracture s'agrandit.")]},
+{id:"divorce",cat:"cou",cond:g=>g.partner==="marié"&&g.couple<=28,t:g=>"Ta femme te dit qu'elle n'en peut plus : elle demande le divorce.",
+ ch:[D("Accepter le divorce",{divorce:1},"Le divorce est prononcé."),
+     R("Tenter de sauver ton mariage",.5,[{couple:25,sal:-.04},"Elle accepte de te donner une seconde chance."],[{divorce:1},"Elle ne change pas d'avis : divorce."]),
+     D("Offrir un voyage et des promesses",{sal:-.05,couple:10},"Elle hésite encore.")]},
+{id:"rupture",cat:"cou",cond:g=>g.partner==="couple"&&g.couple<=18,t:g=>"Ta partenaire veut rompre : vous ne vous comprenez plus.",
+ ch:[D("Accepter la rupture",{breakup:1},"Vous vous séparez."),
+     R("Lui promettre de changer",.5,[{couple:20},"Elle te laisse une dernière chance."],[{breakup:1},"Trop tard : elle part."])]},
+{id:"bebe",cat:"fam",cond:g=>g.partner&&g.couple>=50&&g.kids<4,t:g=>"Ta partenaire aimerait avoir un enfant. Qu'en dis-tu ?",
+ ch:[D("Oui, c'est le bon moment !",{kids:1,fam:14,couple:8,form:-3,sal:-.02},"Un bébé est né ! Les nuits sont courtes mais le bonheur est immense."),
+     D("Pas maintenant, ma carrière passe avant",{couple:-8,form:2},"Elle accepte mais elle est un peu déçue."),
+     D("Attendre un an pour en reparler",{couple:2},"Vous convenez d'en reparler plus tard.")]},
+{id:"aide",cat:"fam",t:g=>"Tes parents te demandent de l'aide financière pour la maison familiale.",
+ ch:[D("Leur offrir une nouvelle maison",{sal:-.10,fam:12,rep:1},"Ils pleurent de joie."),
+     D("Les aider un peu",{sal:-.02,fam:4},"Un geste apprécié."),
+     D("Refuser",{fam:-12,rep:-1},"La famille est déçue.")]},
+{id:"enfantmalade",cat:"fam",cond:g=>g.kids>0,t:g=>"Ton enfant tombe malade la veille d'un match important.",
+ ch:[D("Rester auprès de lui",{fam:10,couple:5,form:-4,coach:-5},"Tu manques le match mais ta famille compte avant tout."),
+     D("Payer les meilleurs médecins",{sal:-.05,fam:6},"Il est vite soigné."),
+     D("Jouer le match quand même",{fam:-15,couple:-10,form:2,rep:2},"Tu brilles mais ta famille t'en veut.")]},
+{id:"selection",cat:"car",cond:g=>g.ovr>=66,t:g=>`Le sélectionneur de ${g.natTeam} t'appelle pour un match amical.`,
+ ch:[D("Accepter avec fierté",{rep:5,form:-6,fam:3,natMatch:1},"Direction la sélection !"),
+     D("Décliner pour te reposer",{rep:-3,form:4,fam:-2},"Les supporters ne comprennent pas.")]},
+{id:"mentor",cat:"car",cond:g=>g.age>=19,t:g=>"Une légende retraitée te propose de te coacher.",
+ ch:[D("Accepter avec joie",{sal:-.02,ovr:1,rep:2},"Ses conseils t'ouvrent de nouveaux horizons."),
+     D("Refuser poliment",{},"Tu préfères avancer seul.")]}
+];
+
+/* ================= ÉTAT ================= */
+let G=null,M=null,NEGO=null,MT="lg",WDc=null,WDd=1;
+const divOf=c=>(G&&G.div&&G.div[c.c+":"+c.n])||c.d;
+const leagueClubs=(cid,d)=>WORLD[cid].clubs.filter(c=>divOf(c)===d);
+function salaryFor(ovr,club){
+  const base=20000*Math.exp((ovr-40)*0.15),lf=clamp(.85+(club.l-60)/80,.8,1.4);
+  return Math.round(base*lf*(MULT[club.c]||1)*(club.d===2?.55:1)*(.9+G.rep/500)/1000)*1000}
+function snap(){return{ovr:Math.round(G.ovr),form:Math.round(G.form),rep:Math.round(G.rep),img:Math.round(G.img),couple:Math.round(G.couple),fam:Math.round(G.fam),coach:Math.round(G.coach),pres:Math.round(G.pres),money:G.money,partner:!!G.partner}}
+function addLog(m){G.log.push(`S${G.season} · ${m}`);if(G.log.length>50)G.log.shift()}
+/* IMPORTANT : aucun scroll automatique, la page reste en place */
+function setMain(h){$("#main").innerHTML=h}
+function saveGame(){try{localStorage.setItem("fl_save2",JSON.stringify(G))}catch(e){}}
+const netWorth=()=>G.money+G.assets.reduce((s,a)=>s+a.v,0)+G.inv.reduce((s,i)=>s+i.amt,0);
+function chips(b,a){
+  const L={ovr:"Niveau",form:"Forme",rep:"Réputation",img:"Image",couple:"Couple",fam:"Famille",coach:"Coach",pres:"Président",money:"Argent"};let h="";
+  for(const k in L){if(k==="couple"&&!b.partner&&!a.partner)continue;const d=a[k]-b[k];if(!d)continue;
+    h+=`<span class="chip ${d>0?"up":"down"}">${L[k]} ${k==="money"?(d>0?"+":"")+fmt(d):(d>0?"+":"")+d}</span>`}
+  return h||`<span class="chip">Aucun changement</span>`}
+function addStats(g,a){G.sGoals+=g;G.sAssists+=a;G.cg+=g;G.ca+=a}
+function scandal(){
+  G.img=clamp(G.img-25);G.rep=clamp(G.rep-8);if(G.partner)G.couple=clamp(G.couple-45);
+  G.money-=G.salary*.05;G.secret=0;
+  const lost=G.spons.filter(()=>Math.random()<.5);G.spons=G.spons.filter(s=>!lost.includes(s));
+  addLog(`💥 SCANDALE : ton infidélité est révélée !${lost.length?" "+lost.map(s=>s.b).join(", ")+" rompt le contrat.":""}`)}
+function doDivorce(){const loss=Math.max(0,G.money)*.35+G.salary*.2;G.money-=loss;G.partner=null;G.couple=0;G.fam=clamp(G.fam-12);G.img=clamp(G.img-5);addLog(`💔 Divorce : tu perds ${fmt(loss)}.`)}
+function doBreakup(){G.partner=null;G.couple=0;addLog("💔 Rupture.")}
+function applyFx(fx){
+  if(fx.sal)G.money+=fx.sal*G.salary;
+  if(fx.money)G.money+=fx.money;
+  if(fx.partner){if(!G.partner)G.couple=20;G.partner=fx.partner}
+  if(fx.kids)G.kids+=fx.kids;
+  ["form","rep","fam","coach","pres","img"].forEach(k=>{if(fx[k])G[k]=clamp(G[k]+fx[k])});
+  if(fx.couple&&G.partner)G.couple=clamp(G.couple+fx.couple);
+  if(fx.ovr)G.ovr=clamp(G.ovr+fx.ovr,40,99);
+  if(fx.ig)G.ig=Math.max(0,G.ig+fx.ig);
+  if(fx.tk)G.tk=Math.max(0,G.tk+fx.tk);
+  if(fx.secret)G.secret+=fx.secret;
+  if(fx.addSpons){const t=G.tmp;G.spons.push({b:t.b,eq:t.eq,amt:fx.addSpons===2?Math.round(t.amt*1.5):t.amt,yrs:t.yrs})}
+  if(fx.natMatch)G.queue.unshift("FR");
+  if(fx.scandal)scandal();
+  if(fx.divorce)doDivorce();
+  if(fx.breakup)doBreakup();
+}
+/* Expulsion / séparations automatiques */
+function checkOut(){
+  if(G.partner&&G.couple<=8){G.partner==="marié"?doDivorce():doBreakup()}
+  if(!G.banned&&(G.coach<=0||G.pres<=0)){
+    G.banned=true;G.forced=true;G.rep=clamp(G.rep-15);G.img=clamp(G.img-10);
+    addLog("🚫 Le club te met à l'écart du groupe et résiliera ton contrat en fin de saison.");G.msg="🚫 Le club t'écarte du groupe : tu ne joueras plus et ton contrat sera résilié en fin de saison.";
+    return true}
+  return false}
+
+/* ================= SIMULATION CHAMPIONNAT ================= */
+function schedule(n){
+  const ids=[...Array(n).keys()],rounds=[];
+  for(let r=0;r<n-1;r++){const f=[];for(let i=0;i<n/2;i++){const a=ids[i],b=ids[n-1-i];f.push(r%2?[b,a]:[a,b])}rounds.push(f);ids.splice(1,0,ids.pop())}
+  return[...rounds,...rounds.map(r=>r.map(([a,b])=>[b,a]))]}
+const sortT=ts=>[...ts].sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf||a.n.localeCompare(b.n));
+function addRes(x,y,gx,gy){x.gf+=gx;x.ga+=gy;y.gf+=gy;y.ga+=gx;
+  if(gx>gy){x.w++;x.pts+=3;y.lo++}else if(gx<gy){y.w++;y.pts+=3;x.lo++}else{x.d++;y.d++;x.pts++;y.pts++}x.p++;y.p++}
+const blank=c=>({n:c.n,l:c.l,p:0,w:0,d:0,lo:0,gf:0,ga:0,pts:0});
+const myEff=()=>G.club.l+clamp((G.ovr-G.club.l)/8,-3,6);
+const lvOf=t=>t.me?t.l+clamp((G.ovr-t.l)/8,-3,6):t.l;
+function newLeague(cid,d,me){
+  const teams=shuffle(leagueClubs(cid,d)).map(blank);
+  return{cid,d,md:0,N:2*(teams.length-1),teams,rounds:schedule(teams.length),me:teams.findIndex(t=>t.n===me.n)}}
+function autoStats(gf){
+  if(G.banned)return;
+  const pt=clamp((G.ovr-(G.club.l-12))/12,.2,1),gpm=Math.max(0,(G.ovr-40)/50)*GOALF[G.pos]/32*pt;
+  const g=Math.min(gf,poisson(gpm)),a=Math.min(gf-g,poisson(gpm*.5));addStats(g,a)}
+function applyRound(lg,r,mine){
+  lg.rounds[r-1].forEach(([a,b])=>{
+    const A=lg.teams[a],B=lg.teams[b];let ga,gb;
+    if(a===lg.me||b===lg.me){
+      if(mine){ga=a===lg.me?mine.my:mine.op;gb=a===lg.me?mine.op:mine.my}
+      else{const e=myEff();const s=simPair(a===lg.me?e:A.l,b===lg.me?e:B.l);ga=s[0];gb=s[1];autoStats(a===lg.me?ga:gb)}
+    }else{const s=simPair(A.l,B.l);ga=s[0];gb=s[1]}
+    addRes(A,B,ga,gb)});
+  lg.md=r}
+function lgSimTo(m){const lg=G.lg;for(let r=lg.md+1;r<=m;r++)applyRound(lg,r,null)}
+function seededTable(cid,d,md,seed){
+  const cl=leagueClubs(cid,d).map(blank),rg=mulberry(seed),rounds=schedule(cl.length);
+  const m=md==null?rounds.length:Math.min(md,rounds.length);
+  for(let r=0;r<m;r++)rounds[r].forEach(([a,b])=>{const s=simPair(cl[a].l,cl[b].l,rg);addRes(cl[a],cl[b],s[0],s[1])});
+  return sortT(cl)}
+
+/* ================= COMPÉTITIONS (coupe, continental, sélection) ================= */
+const rname=n=>({16:"Huitièmes de finale",8:"Quarts de finale",4:"Demi-finales",2:"Finale"})[n];
+function newComp(name,teams,o){
+  const C={name,w:o.w||3,nat:!!o.nat,dbl:!!o.dbl,teams:teams.map(t=>({n:t.n,l:t.l,f:t.f,me:!!t.me,p:0,w:0,d:0,lo:0,gf:0,ga:0,pts:0})),
+    log:[],r:0,gr:0,done:false,won:false,out:null,groups:null,cur:null,stage:"KO",alive:teams.some(t=>t.me)};
+  const idx=shuffle(C.teams.map((_,i)=>i));
+  if(o.groups){C.stage="G";C.groups=[];for(let i=0;i<idx.length;i+=4)C.groups.push(idx.slice(i,i+4));
+    C.sched=schedule(4);if(!C.dbl)C.sched=C.sched.slice(0,3)}
+  else C.cur=idx;
+  return C}
+function groupRound(C,r,mine){
+  const meI=C.teams.findIndex(t=>t.me);
+  C.groups.forEach(gr=>C.sched[r].forEach(([a,b])=>{
+    const x=C.teams[gr[a]],y=C.teams[gr[b]],isMe=gr[a]===meI||gr[b]===meI;let ga,gb;
+    if(mine&&isMe){ga=gr[a]===meI?mine.my:mine.op;gb=gr[a]===meI?mine.op:mine.my}
+    else{const s=simPair(lvOf(x),lvOf(y));ga=s[0];gb=s[1]}
+    addRes(x,y,ga,gb);
+    if(isMe)C.log.push(`Groupe · J${r+1} : ${x.n} ${ga}-${gb} ${y.n}`)}))}
+function endGroups(C){
+  const q=C.groups.map(gr=>sortT(gr.map(i=>C.teams[i])).slice(0,2).map(t=>C.teams.indexOf(t))),cur=[];
+  if(q.length===1)cur.push(q[0][0],q[0][1]);
+  else for(let g=0;g<q.length;g+=2)cur.push(q[g][0],q[g+1][1],q[g+1][0],q[g][1]);
+  C.cur=cur;C.r=0;C.stage="KO";
+  if(C.alive&&!cur.some(i=>C.teams[i].me)){C.alive=false;C.out="Phase de groupes"}}
+function koRound(C,mine){
+  const rn=rname(C.cur.length),nx=[];
+  for(let i=0;i<C.cur.length;i+=2){
+    const A=C.teams[C.cur[i]],B=C.teams[C.cur[i+1]];let w,sc;
+    if(mine&&(A.me||B.me)){const ga=A.me?mine.my:mine.op,gb=A.me?mine.op:mine.my;w=mine.win?(A.me?A:B):(A.me?B:A);sc=`${ga}-${gb}`+(mine.pk?" (t.a.b.)":mine.et?" (a.p.)":"")}
+    else{const r=simKO(lvOf(A),lvOf(B));w=r.a>r.b?A:B;sc=`${r.a}-${r.b}`+(r.pen?" (t.a.b.)":r.et?" (a.p.)":"")}
+    C.log.push(`${rn} : ${A.n} ${sc} ${B.n} → ${w.n}`);
+    if((A.me||B.me)&&!w.me&&C.alive){C.alive=false;C.out=rn}
+    nx.push(C.teams.indexOf(w))}
+  C.cur=nx;C.r++;
+  if(nx.length===1){C.done=true;if(C.teams[nx[0]].me)C.won=true}}
+function compFinish(C){
+  if(!C)return;
+  while(C.stage==="G"&&C.gr<C.sched.length){groupRound(C,C.gr,null);C.gr++}
+  if(C.stage==="G")endGroups(C);
+  while(!C.done)koRound(C,null)}
+function compPlay(C){
+  if(!C||C.done||!C.alive)return nextStep();
+  const meI=C.teams.findIndex(t=>t.me);
+  if(C.stage==="G"){
+    const r=C.gr,g=C.groups.findIndex(x=>x.includes(meI)),gr=C.groups[g];
+    const fx=C.sched[r].find(([a,b])=>gr[a]===meI||gr[b]===meI),oi=gr[fx[0]]===meI?gr[fx[1]]:gr[fx[0]];
+    const m=C.teams[meI],o=C.teams[oi];
+    offerMatch({title:`${C.name} · Groupe ${"ABCD"[g]} · Journée ${r+1}`,myN:m.n,myF:m.f,myL:m.l,opN:o.n,opF:o.f,opL:o.l,big:false,ko:false,nat:C.nat,
+      onEnd:res=>{groupRound(C,r,res);C.gr++;let t="Classement du groupe mis à jour.";
+        if(C.gr>=C.sched.length){endGroups(C);t=C.alive?`✅ Qualifié pour les ${rname(C.cur.length)} !`:"❌ Éliminé en phase de groupes"}
+        return `<div class="ln sys">${t}</div>`}});
+  }else{
+    const p=C.cur.indexOf(meI),A=C.teams[C.cur[p-(p%2)]],B=C.teams[C.cur[p-(p%2)+1]],m=A.me?A:B,o=A.me?B:A,rn=rname(C.cur.length);
+    offerMatch({title:`${C.name} · ${rn}`,myN:m.n,myF:m.f,myL:m.l,opN:o.n,opF:o.f,opL:o.l,big:C.cur.length<=4,ko:true,nat:C.nat,
+      onEnd:res=>{koRound(C,res);
+        if(res.win){if(C.won){trophy(C.name,C.w);return `<div class="ln goal">🏆 Tu remportes ${C.name} !</div>`}
+          return `<div class="ln goal">✅ Qualifié pour les ${rname(C.cur.length)}</div>`}
+        return `<div class="ln bad">❌ Éliminé en ${rn}</div>`}});
+  }}
+function trophy(name,w){G.cab[name]=(G.cab[name]||0)+1;G.trophies++;G.sTitles.push(name);G.sPts+=w;G.rep=clamp(G.rep+w/2);addLog(`🏆 ${name} !`)}
+const cres=C=>!C?"—":C.won?"🏆 Vainqueur":C.out?"Éliminé : "+C.out:C.alive?"En cours":"—";
+function buildCup(){
+  const w=WORLD[G.club.c],o=shuffle(w.clubs.filter(c=>c.n!==G.club.n)).slice(0,15).map(c=>({n:c.n,l:c.l,f:w.f}));
+  return newComp(`Coupe nationale (${w.n})`,[{n:G.club.n,l:G.club.l,f:w.f,me:true},...o],{w:3})}
+function buildCont(key){
+  const w=WORLD[G.club.c],k=w.k;
+  const pool=Object.values(WORLD).filter(x=>x.k===k).flatMap(x=>x.clubs.filter(c=>divOf(c)===1&&!(c.c===G.club.c&&c.n===G.club.n)).map(c=>({n:c.n,l:c.l,f:x.f}))).sort((a,b)=>b.l-a.l);
+  const rg={m:[0,36],s:[18,70],t:[45,110]}[key];let arr=shuffle(pool.slice(rg[0],rg[1]));if(arr.length<15)arr=shuffle(pool);
+  const size=arr.length>=15?16:arr.length>=7?8:4;
+  return newComp(COMPS[k][key],[{n:G.club.n,l:G.club.l,f:w.f,me:true},...arr.slice(0,size-1)],{groups:true,dbl:true,w:{m:8,s:5,t:3}[key]})}
+function ntComps(yr){
+  const k=NTM[G.natTeam].k,l=[];
+  if(yr%4===2)l.push({n:"Coupe du monde",w:12,spec:[["EU",5],["AF",3],["AMS",3],["AMN",2],["AS",2],["OC",1]]});
+  else{
+    if(k==="EU"&&yr%4===0)l.push({n:"Euro",w:7,spec:[["EU",16]]});
+    if(k==="AMS"&&yr%4===0)l.push({n:"Copa América",w:7,spec:[["AMS",8]]});
+    if(k==="AF"&&yr%2===1)l.push({n:"CAN",w:7,spec:[["AF",8]]});
+    if(k==="AMN"&&yr%2===1)l.push({n:"Gold Cup",w:6,spec:[["AMN",4]]});
+    if(k==="AS"&&yr%4===3)l.push({n:"Coupe d'Asie",w:6,spec:[["AS",8]]});
+    if(k==="OC"&&yr%4===0)l.push({n:"Coupe d'Océanie",w:5,spec:[["OC",4]]})}
+  return l}
+function setupNT(){
+  G.nt=null;G.ntInfo=null;const list=ntComps(2026+G.season);if(!list.length)return;
+  const cp=list[0],t=NTM[G.natTeam],teams=[];
+  cp.spec.forEach(([k,cnt])=>NTS.filter(x=>x.k===k).map(x=>({x,s:x.l+rnd(-6,6)})).sort((a,b)=>b.s-a.s).slice(0,cnt).forEach(o=>teams.push({n:o.x.n,l:o.x.l,f:o.x.f})));
+  const qual=teams.some(x=>x.n===G.natTeam),sel=qual&&Math.random()<clamp(.5+(G.ovr-(t.l-12))/40,.1,.98);
+  if(sel)teams.find(x=>x.n===G.natTeam).me=true;
+  G.nt=newComp(cp.n,teams,{groups:true,dbl:false,nat:true,w:cp.w});
+  G.ntInfo=sel?"Convoqué ✅":qual?"Qualifié mais non convoqué":"Ta sélection n'est pas qualifiée"}
+
+/* ================= SITUATIONS DE MATCH ================= */
+const O=(msg,o={})=>({msg,my:0,op:0,goal:false,ast:false,rate:0,counter:0,rep:0,...o});
+const tm=()=>clamp((M.myL-M.opL)/120,-.3,.3);
+const pw=()=>clamp((G.ovr-M.opL)/160,-.2,.12);
+const pf=()=>(G.form-60)/300;
+const posB=()=>({att:.08,ail:.05,mil:0,def:-.1})[G.pos];
+const SIT={
+ attaque:()=>({text:"Tu reçois le ballon aux 25 mètres. Ton ailier est démarqué sur la droite, l'avant-centre se place dans la surface et il y a de l'espace devant toi. Que fais-tu ?",
+  ch:[
+   {t:"🤝 Faire la passe à l'ailier démarqué",f:()=>{
+      if(Math.random()<.74){
+        if(Math.random()<clamp(.42+tm(),.15,.75))return O("Ton ailier reçoit, élimine son vis-à-vis et marque ! Belle passe décisive pour toi.",{my:1,ast:true,rate:.9});
+        return O("Ton ailier frappe, mais le gardien repousse. Dommage.",{rate:.2})}
+      return O("Ta passe est trop appuyée : l'adversaire intercepte.",{rate:-.3,counter:.2})}},
+   {t:"🏃 Jouer seul : dribbler et aller marquer",f:()=>{
+      if(Math.random()<clamp(.30+pw()+pf()+posB()+tm()/2,.08,.7))return O("Tu élimines deux défenseurs et tu catapultes le ballon au fond des filets ! BUUUT !",{my:1,goal:true,rate:1.3,rep:1});
+      return O("Tu t'enfermes dans ton dribble : le défenseur récupère le ballon.",{rate:-.4,counter:.3})}},
+   {t:"🚀 Tenter une frappe lointaine",f:()=>{
+      if(Math.random()<clamp(.14+pw()/2+pf()/2+posB()/2,.04,.4))return O("Quelle frappe ! Le ballon se loge dans la lucarne !",{my:1,goal:true,rate:1.4,rep:1});
+      return O("Ta frappe passe au-dessus de la barre.",{rate:-.1})}},
+   {t:"🔄 Jouer simple vers le milieu",f:()=>O("Tu conserves le ballon et l'équipe garde le contrôle du match.",{rate:.1})}]}),
+ contre:()=>({text:"Récupération haute ! Tu pars en contre-attaque. Un coéquipier court en soutien sur ta gauche et le gardien est sorti de sa surface. Que fais-tu ?",
+  ch:[
+   {t:"🤝 Servir le coéquipier en soutien",f:()=>{
+      if(Math.random()<.8){
+        if(Math.random()<clamp(.6+tm(),.35,.85))return O("Passe parfaite ! Ton coéquipier n'a plus qu'à pousser le ballon au fond. Passe décisive !",{my:1,ast:true,rate:.9});
+        return O("Ton coéquipier tire sur le poteau ! Tout près !",{rate:.2})}
+      return O("Ta passe est contrée par un défenseur qui revenait.",{rate:-.3})}},
+   {t:"⚡ Tirer immédiatement",f:()=>{
+      if(Math.random()<clamp(.32+pw()+pf()+posB()+tm()/2,.1,.7))return O("Tu fusilles le gardien sans trembler ! BUUUT !",{my:1,goal:true,rate:1.2,rep:1});
+      return O("Le gardien se détend et détourne ta frappe.",{rate:-.1})}},
+   {t:"🌀 Dribbler le gardien",f:()=>{
+      if(Math.random()<clamp(.38+pw()+pf()+posB()+tm()/2,.1,.75))return O("Tu élimines le gardien et tu marques dans le but vide ! Magnifique !",{my:1,goal:true,rate:1.5,rep:2});
+      return O("Le gardien te chipe le ballon dans les pieds.",{rate:-.5,counter:.2})}},
+   {t:"🕐 Temporiser et attendre du soutien",f:()=>O("Tu attends, mais la défense adverse se replace. L'occasion s'envole.",{rate:-.1})}]}),
+ coupfranc:()=>({text:"Coup franc à 22 mètres, légèrement excentré. Le mur est bien placé et le gardien semble nerveux.",
+  ch:[
+   {t:"🎯 Tirer toi-même",f:()=>{
+      if(Math.random()<clamp(.17+pw()/2+pf(),.05,.4))return O("Ton coup franc contourne le mur et finit dans la lucarne ! Quel but !",{my:1,goal:true,rate:1.4,rep:2});
+      return O("Ton coup franc s'écrase dans le mur.",{rate:-.1})}},
+   {t:"🤝 Jouer court avec un coéquipier",f:()=>{
+      if(Math.random()<clamp(.24+tm(),.1,.5))return O("Combinaison réussie, ton coéquipier marque ! Passe décisive pour toi.",{my:1,ast:true,rate:.9});
+      return O("La combinaison est repérée par la défense.",{rate:-.1})}},
+   {t:"🙌 Laisser le tireur désigné s'en charger",f:()=>{
+      if(Math.random()<clamp(.17+tm(),.05,.45))return O("Le tireur désigné trouve le chemin des filets !",{my:1});
+      return O("Le tir est dévié par le mur.")}}]}),
+ penalty:()=>({text:"Penalty pour ton équipe ! Le ballon est posé, tous les regards se tournent vers toi. Qui tire ?",
+  ch:[
+   {t:"💥 Tirer en force",f:()=>{
+      if(Math.random()<clamp(.72+pf()+pw()/2,.4,.92))return O("Le gardien est battu, but ! Tu transformes le penalty !",{my:1,goal:true,rate:1.1});
+      return O("Le gardien détourne ta frappe ! Penalty manqué !",{rate:-.8,rep:-1})}},
+   {t:"🎯 Placer la balle au ras du poteau",f:()=>{
+      if(Math.random()<clamp(.78+pf()+pw()/2,.4,.93))return O("Penalty parfait, le gardien plonge de l'autre côté !",{my:1,goal:true,rate:1.1});
+      return O("Ton tir passe à côté du poteau. Quelle déception !",{rate:-.9,rep:-1})}},
+   {t:"😎 Tenter la Panenka",f:()=>{
+      if(Math.random()<clamp(.55+pf(),.3,.75))return O("PANENKA ! Le gardien a plongé, le stade s'enflamme !",{my:1,goal:true,rate:1.6,rep:3});
+      return O("Le gardien reste au centre et capte ta Panenka… humiliation.",{rate:-1.4,rep:-3})}},
+   {t:"🙌 Laisser le tireur désigné",f:()=>Math.random()<.75?O("Le tireur désigné ne tremble pas et marque.",{my:1}):O("Le tireur désigné manque le cadre !")}]}),
+ defense:()=>({text:"L'adversaire part en contre ! Un attaquant fonce vers ta surface et tu es le dernier défenseur disponible. Que fais-tu ?",
+  ch:[
+   {t:"🦵 Tacler fermement",f:()=>{
+      if(Math.random()<clamp(.55+pw()/2+(G.pos==="def"?.1:0),.25,.8))return O("Tacle propre et parfaitement chronométré, tu récupères le ballon !",{rate:.7});
+      if(Math.random()<.5)return O("Tu arrives en retard : faute dans la surface, penalty transformé par l'adversaire !",{op:1,rate:-1});
+      return O("Tu manques ton tacle, mais le gardien sauve la situation.",{rate:-.3})}},
+   {t:"🛡️ Reculer et couvrir l'espace",f:()=>{
+      if(Math.random()<clamp(.65+pw()/2,.3,.85))return O("Tu fermes l'angle et l'attaquant tire sans danger.",{rate:.4});
+      return O("L'attaquant te dépasse sur un crochet, la défense est mise à mal.",{rate:-.3,counter:.6})}},
+   {t:"🔥 Presser très haut pour récupérer",f:()=>{
+      if(Math.random()<.45){
+        if(Math.random()<.4)return O("Tu gagnes le ballon et lances une contre-attaque : ton équipe marque ! Passe décisive pour toi.",{my:1,ast:true,rate:.9});
+        return O("Tu récupères le ballon et relances proprement.",{rate:.4})}
+      return O("Le pressing est contourné, l'adversaire s'engouffre dans l'espace.",{rate:-.4,counter:.5})}}]})
+};
+function pickType(i){
+  if(i===0)return"attaque";
+  if(i===5||i>=6)return Math.random()<.5?"attaque":"contre";
+  const pool=["attaque","contre","coupfranc","defense","penalty"].filter(t=>!(["penalty","coupfranc"].includes(t)&&M.used.includes(t)));
+  return pick(pool)}
+
+/* ================= MOTEUR DE MATCH ================= */
+function mkM(cfg){return{...cfg,my:0,op:0,goals:0,ast:0,rating:6,i:0,min:0,used:[],cur:null,et:false,pk:false,pen:undefined,
+  mins:[ri(5,12),ri(20,28),ri(35,43),ri(52,60),ri(66,74),ri(82,88)]}}
+function board(){return `<div class="board"><div><span>${M.myF}</span><small>${M.myN}</small></div><div class="sc">${M.my} - ${M.op}</div><div><span>${M.opF}</span><small>${M.opN}</small></div></div>
+  <p class="mstat">⏱ ${M.min}' · ⚽ ${M.goals} but(s) · 🎯 ${M.ast} passe(s) D · Note ${M.rating.toFixed(1)}/10</p>`}
+function flushAuto(cb){
+  if(!G.autoLog.length)return cb();
+  const l=G.autoLog;G.autoLog=[];G.auto=false;
+  setMain(`<span class="tag">⏩ Matchs simulés</span><h2>${l.length} match(s) simulé(s)</h2><button class="btn" id="go">Continuer</button><div style="margin-top:10px">${l.map(x=>`<div class="ln">${x}</div>`).join("")}</div>`);
+  $("#go").onclick=cb;render()}
+function offerMatch(cfg){
+  if(G.banned){M=mkM(cfg);simulateM(true);const c=concludeM(true);G.autoLog.push(`🚫 ${cfg.title} : écarté du groupe (${c.sc})`);return nextStep()}
+  if(G.auto&&cfg.ko){G.auto=false;return flushAuto(()=>offerMatch(cfg))}
+  if(G.auto){M=mkM(cfg);simulateM();const c=concludeM();G.autoLog.push(`${cfg.title} : ${c.res} ${c.sc} vs ${cfg.opN}`);return nextStep()}
+  M=mkM(cfg);
+  const d=M.myL-M.opL,hint=d>=8?"Vous êtes grands favoris.":d>=3?"Vous êtes favoris.":d<=-8?"Vous êtes de gros outsiders : un exploit est possible mais rare.":d<=-3?"Vous êtes outsiders.":"Le match s'annonce équilibré.";
+  setMain(`<span class="tag">⚽ ${M.title}</span><h2>${M.myN} - ${M.opN}</h2>
+  <div><button class="btn" onclick="nextMoment()">⚽ Jouer le match</button><button class="btn ghost" onclick="simAuto()">⏩ Simuler ce match</button><button class="btn alt" onclick="startAuto()">⏩⏩ Simuler jusqu'au prochain événement</button></div>
+  ${board()}<p class="txt">${hint}${M.ko?" Match à élimination directe : prolongations et tirs au but possibles.":""}</p>`);
+}
+function startAuto(){G.auto=true;offerMatch(M)}
+function simAuto(){simulateM();endMatch()}
+function simulateM(ns){
+  const my=M.myL+clamp((G.ovr-M.myL)/8,-3,6),s=simPair(my,M.opL);M.my=s[0];M.op=s[1];
+  if(!ns&&M.my>0){const pt=clamp((G.ovr-(M.myL-12))/12,.2,1),gpm=Math.max(0,(G.ovr-40)/50)*GOALF[G.pos]/32*pt;
+    M.goals=Math.min(M.my,poisson(gpm));M.ast=Math.min(M.my-M.goals,poisson(gpm*.5))}
+  M.rating=clamp(6+(M.my-M.op)*.5+rnd(-.5,.8)+M.goals*.8+M.ast*.4,4,9.5);
+  if(M.ko&&M.my===M.op){M.et=true;M.my+=poisson(.45*Math.exp((my-M.opL)/28));M.op+=poisson(.35*Math.exp((M.opL-my)/28));
+    if(M.my===M.op){M.pk=true;M.pen=Math.random()<clamp(.5+(my-M.opL)/300,.2,.8)}}
+}
+function nextMoment(){
+  M.min=M.mins[M.i];const type=pickType(M.i);M.used.push(type);M.cur=SIT[type]();
+  let pre="";
+  if(M.i===5)pre=M.my>M.op?"Dernières minutes, vous menez : il faut tenir ! ":M.my<M.op?"Dernières minutes, vous êtes menés : il faut tout tenter ! ":"Dernières minutes, le score est nul : un but peut tout changer ! ";
+  if(M.i>=6)pre="Prolongation ! ";
+  let h=`<span class="tag">⚽ ${M.title}</span><div class="choices">`;
+  M.cur.ch.forEach((c,k)=>{h+=`<button class="choice" data-k="${k}">${c.t}</button>`});
+  h+=`</div>${board()}<h2>${M.min}'</h2><p class="txt">${pre}${M.cur.text}</p>`;
+  setMain(h);document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>playChoice(+b.dataset.k));
+}
+function playChoice(k){
+  const o=M.cur.ch[k].f(),lines=[];
+  lines.push(`<div class="ln ${o.goal||o.my?"goal":o.op?"bad":""}">${M.min}' — ${o.msg}</div>`);
+  M.my+=o.my;M.op+=o.op;if(o.goal)M.goals++;if(o.ast)M.ast++;
+  M.rating=clamp(M.rating+o.rate,3,10);if(o.rep)G.rep=clamp(G.rep+o.rep);
+  if(o.counter&&Math.random()<clamp(o.counter+(M.opL-M.myL)/200,.05,.6)){M.op++;M.rating=clamp(M.rating-.2,3,10);lines.push(`<div class="ln bad">⚠️ Contre-attaque fatale : ${M.opN} marque !</div>`)}
+  if(M.i<M.mins.length-1){
+    const gm=Math.min(M.min+ri(3,8),M.et?118:89);
+    if(Math.random()<clamp(.10+tm()*.8,.02,.35)){M.my++;lines.push(`<div class="ln goal">${gm}' — ⚽ Un de tes coéquipiers marque ! ${M.myN} fait la différence.</div>`)}
+    if(Math.random()<clamp(.10-tm()*.8,.02,.35)){M.op++;lines.push(`<div class="ln bad">${gm}' — ⚠️ ${M.opN} marque sur une action collective.</div>`)}}
+  M.i++;
+  if(M.i===3&&!M.et)lines.push(`<div class="ln sys">🔔 Mi-temps : ${M.myN} ${M.my} - ${M.op} ${M.opN}</div>`);
+  let last=M.i>=M.mins.length,btn;
+  if(last&&M.ko&&M.my===M.op&&!M.et){M.et=true;M.mins.push(97,111);last=false;lines.push(`<div class="ln sys">⏱ Fin du temps réglementaire : prolongations !</div>`)}
+  if(last&&M.ko&&M.my===M.op){lines.push(`<div class="ln sys">🥅 Toujours égalité : tirs au but !</div>`);btn=`<button class="btn" onclick="askPenalty()">Tirs au but</button>`}
+  else if(last){lines.push(`<div class="ln sys">🏁 Coup de sifflet final !</div>`);btn=`<button class="btn" onclick="endMatch()">Voir le bilan</button>`}
+  else btn=`<button class="btn" onclick="nextMoment()">Continuer le match</button>`;
+  setMain(`<span class="tag">⚽ ${M.title}</span><div>${btn}</div>${board()}${lines.join("")}`);
+}
+function askPenalty(){
+  setMain(`<span class="tag">⚽ ${M.title}</span><h2>🥅 Tirs au but</h2>${board()}<p class="txt">Tu es le 3e tireur de ton équipe. Comment tires-tu ?</p>
+  <div class="choices"><button class="choice" onclick="takePenalty(0)">💥 Frappe puissante</button><button class="choice" onclick="takePenalty(1)">🎯 Placée au ras du poteau</button><button class="choice" onclick="takePenalty(2)">😎 Panenka</button></div>`);
+}
+function takePenalty(style){
+  const ok=Math.random()<clamp([.72,.78,.55][style]+pf()+pw()/3,.3,.9);
+  M.rating=clamp(M.rating+(ok?.5:-.8),3,10);if(style===2&&ok)G.rep=clamp(G.rep+2);
+  const pa=clamp(.76+tm()/2,.55,.88),pb=clamp(.76-tm()/2,.55,.88),A=[],B=[];
+  for(let k=0;k<5;k++){A.push(k===2?ok:Math.random()<pa);B.push(Math.random()<pb)}
+  let sa=A.filter(x=>x).length,sb=B.filter(x=>x).length,g=0;
+  while(sa===sb&&g++<30){const x=Math.random()<pa,y=Math.random()<pb;A.push(x);B.push(y);sa+=x?1:0;sb+=y?1:0}
+  if(sa===sb)sa++;
+  M.pk=true;M.pen=sa>sb;
+  const f=a=>a.map(x=>x?"✅":"❌").join(" ");
+  setMain(`<span class="tag">⚽ ${M.title}</span><div><button class="btn" onclick="endMatch()">Voir le bilan</button></div><h2>🥅 Tirs au but</h2>
+  <div class="ln">${M.myN} : ${f(A)} (${sa})</div><div class="ln">${M.opN} : ${f(B)} (${sb})</div>
+  <p class="txt">${ok?"Ton tir est réussi !":"Tu as raté ton tir…"} ${M.pen?"Votre équipe gagne la séance !":"Vous perdez la séance…"}</p>`);
+}
+function concludeM(ns){
+  const win=M.my>M.op||(M.my===M.op&&M.pen===true),draw=!M.ko&&M.my===M.op,r=M.rating,b=snap();let motm=false;
+  if(!ns){
+    addStats(M.goals,M.ast);
+    G.form=clamp(G.form-.3+(win?1.5:draw?0:-1.5)+(r>=7.5?1:r<5.5?-1.5:0));
+    G.rep=clamp(G.rep+(win?(M.big||M.nat?2:.5):draw?0:(M.big||M.nat?-1.5:-.5))+(r>=8?1:0));
+    if(win)G.money+=G.salary*.005;
+    if(r>=7.8){motm=true;G.motm++;G.rep=clamp(G.rep+1)}}
+  const extra=M.onEnd?M.onEnd({my:M.my,op:M.op,win,pk:M.pk,et:M.et}):"";
+  const res=win?"Victoire":draw?"Match nul":"Défaite",sc=`${M.my}-${M.op}`+(M.pk?" (t.a.b.)":M.et?" (a.p.)":"");
+  addLog(`${M.title} : ${res} ${sc} vs ${M.opN}${motm?" ⭐ homme du match":""}`);
+  return{win,draw,res,sc,motm,extra,chips:chips(b,snap())}}
+function endMatch(){
+  const c=concludeM();
+  setMain(`<span class="tag">📋 Bilan du match</span>
+  <div><button class="btn" id="go">Continuer</button><button class="btn ghost" onclick="openTab('lg')">📊 Classement</button></div>
+  <h2>${c.win?"🎉 "+c.res:c.draw?"🤝 "+c.res:"😞 "+c.res} (${c.sc})</h2>${board()}
+  ${c.motm?`<div class="ln goal">🎖️ Tu es élu homme du match !</div>`:""}${c.extra}
+  <div class="chips">${c.chips}</div>
+  <table><tr><td>Tes buts</td><td>${M.goals}</td></tr><tr><td>Tes passes décisives</td><td>${M.ast}</td></tr><tr><td>Ta note</td><td>${M.rating.toFixed(1)} / 10</td></tr></table>`);
+  $("#go").onclick=nextStep;render()}
+
+/* ================= SAISON ================= */
+function lgRecord(k,res){const lg=G.lg;lgSimTo(k-1);if(lg.md<k)applyRound(lg,k,{my:res.my,op:res.op})}
+function doLG(k){
+  const lg=G.lg;if(lg.md>=k)return nextStep();
+  lgSimTo(k-1);
+  const fx=lg.rounds[k-1].find(f=>f.includes(lg.me)),o=lg.teams[fx[0]===lg.me?fx[1]:fx[0]],w=WORLD[G.club.c];
+  offerMatch({title:`${G.club.d===1?w.d1n:w.d2n} · Journée ${k}/${lg.N}`,myN:G.club.n,myF:w.f,myL:G.club.l,opN:o.n,opF:w.f,opL:o.l,big:false,ko:false,nat:false,
+    onEnd:res=>{lgRecord(k,res);const r=sortT(lg.teams).findIndex(t=>t.n===G.club.n)+1;return `<div class="ln sys">📊 Classement après la journée ${k} : ${r}${r===1?"er":"e"}</div>`}});
+}
+function friendly(){
+  const t=NTM[G.natTeam],o=pick(NTS.filter(x=>x.n!==G.natTeam));
+  offerMatch({title:"Match amical international",myN:G.natTeam,myF:t.f,myL:t.l,opN:o.n,opF:o.f,opL:o.l,big:false,ko:false,nat:true,onEnd:()=>""})}
+function buildQueue(N){
+  const q=[],plan={},add=(f,tk)=>{const w=clamp(Math.round(N*f),1,N);(plan[w]=plan[w]||[]).push(tk)};
+  [.07,.22,.4,.52,.7,.86].forEach(f=>add(f,"EV"));
+  [.18,.38,.6,.82].forEach(f=>add(f,"C:cup"));
+  [.10,.18,.28,.36,.46,.54,.68,.80,.93].forEach(f=>add(f,"C:ct"));
+  add(.5,"TR");
+  for(let w=1;w<=N;w++){q.push("LG:"+w);(plan[w]||[]).forEach(t=>q.push(t))}
+  for(let i=0;i<6;i++)q.push("C:nt");
+  return q}
+function beginSeason(){
+  const wc=WORLD[G.club.c].clubs.find(x=>x.n===G.club.n);if(wc){G.club.l=wc.l;G.club.d=divOf(wc)}
+  G.lg=newLeague(G.club.c,G.club.d,G.club);G.cup=buildCup();G.ct=G.cont?buildCont(G.cont):null;setupNT();
+  G.sGoals=0;G.sAssists=0;G.sTitles=[];G.sPts=0;G.act=3;G.auto=false;G.autoLog=[];G.msg="";
+  let el=EVENTS.filter(e=>(!e.cond||e.cond(G))&&!G.seen.includes(e.id));
+  if(el.length<6){G.seen=[];el=EVENTS.filter(e=>!e.cond||e.cond(G))}
+  G.evs=shuffle(el).slice(0,6).map(e=>e.id);G.seen=[...G.seen,...G.evs].slice(-14);
+  G.queue=buildQueue(G.lg.N);
+  saveGame();render();nextStep();
+}
+function nextStep(){
+  if(G.form<=0)return finish("blessure");
+  if(G.money<-2e6)return finish("ruine");
+  if(!G.queue.length)return flushAuto(endSeason);
+  const s=G.queue[0],isM=/^LG:|^C:|^FR$/.test(s);
+  if(!isM){G.auto=false;if(G.autoLog.length)return flushAuto(nextStep)}
+  G.queue.shift();
+  if(s==="TR")return transferWindow();
+  if(s==="EV")return showEvent(G.evs.shift());
+  if(s==="FR")return friendly();
+  if(s.startsWith("LG:"))return doLG(+s.slice(3));
+  if(s==="C:cup")return compPlay(G.cup);
+  if(s==="C:ct")return compPlay(G.ct);
+  if(s==="C:nt")return compPlay(G.nt);
+  nextStep()}
+function showEvent(id){
+  const ev=EVENTS.find(e=>e.id===id);if(!ev||(ev.cond&&!ev.cond(G)))return nextStep();
+  const txt=ev.t(G),chs=typeof ev.ch==="function"?ev.ch(G):ev.ch;
+  let h=`<span class="tag">${CATS[ev.cat]}</span><div class="choices" style="margin-top:6px">`;
+  chs.forEach((c,i)=>{h+=`<button class="choice" data-i="${i}">${c.t}</button>`});
+  h+=`</div><h2>Saison ${G.season} · ${G.age} ans</h2><p class="txt">${txt}</p>`;
+  setMain(h);document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>resolve(chs[b.dataset.i]));
+}
+function resolve(c){
+  let r=c.ok;if(c.p!==undefined)r=Math.random()<c.p?c.ok:c.ko;
+  const b=snap();applyFx(r.fx);G.msg="";const out=checkOut();const a=snap();addLog(r.msg);
+  setMain(`<div><button class="btn" id="go">Continuer</button></div><p class="txt">${r.msg}</p>${out?`<div class="ln bad">${G.msg}</div>`:""}<div class="chips">${chips(b,a)}</div>`);
+  $("#go").onclick=nextStep;render()}
+
+/* ================= MERCATO (le joueur) ================= */
+function makeOffers(forced){
+  const tgt=G.ovr+ri(-3,7)-(forced?8:0);
+  const all=Object.values(WORLD).flatMap(w=>w.clubs.map(c=>({n:c.n,l:c.l,c:c.c,d:divOf(c)})));
+  let pool=all.filter(c=>!(c.n===G.club.n&&c.c===G.club.c)).sort((a,b)=>Math.abs(a.l-tgt)-Math.abs(b.l-tgt)).slice(0,10);
+  pool=shuffle(pool).slice(0,3);
+  const arr=[...(!forced&&G.pres>=25?[{club:G.club,renew:true}]:[]),...pool.map(c=>({club:c}))];
+  G.offers=arr.map(o=>{o.sal=Math.round(salaryFor(G.ovr,o.club)*(forced?.7:1)/1000)*1000;o.bonus=Math.round(o.sal*(o.renew?.15:.35)/1000)*1000;return o})}
+function transferWindow(){makeOffers(false);renderOffers()}
+function forcedMarket(){makeOffers(true);renderOffers()}
+function renderOffers(){
+  let h=`<span class="tag">💼 Mercato</span><h2>${G.forced?"Ton contrat est résilié : trouve un nouveau club !":`Saison ${G.season} · Offres reçues`}</h2>
+  <p class="txt">${G.forced?"Aucun club ne te garde : choisis parmi ces propositions.":"Signe tout de suite ou négocie. Un transfert prend effet à la fin de la saison."}</p><div class="offers">`;
+  G.offers.forEach((o,i)=>{const w=WORLD[o.club.c];
+    h+=`<div class="offer"><div><b>${w.f} ${o.club.n}</b> ${o.renew?'<span class="pill">Prolongation</span>':""}<br><small>${w.n} · ${divOf(o.club)===1?w.d1n:w.d2n} · niveau ${o.club.l} · <b>${fmt(o.sal)}</b>/an · prime ${fmt(o.bonus)}</small></div>
+    <div><button class="btn small" onclick="accept(${i},0,'')">Signer</button><button class="btn small alt" onclick="openNego(${i})">Négocier</button></div></div>`});
+  h+=`</div>${G.forced?"":`<button class="btn ghost" onclick="skipMarket()">Ne rien signer et continuer la saison</button>`}`;
+  setMain(h)}
+function skipMarket(){G.offers=[];nextStep()}
+function accept(i,comm,pref){
+  const o=G.offers[i],b=snap();G.money+=o.bonus-comm;let m;
+  if(o.renew){G.salary=o.sal;m=`Tu prolonges à ${o.club.n} avec un salaire de ${fmt(o.sal)} par an.`;G.form=clamp(G.form+2);G.pres=clamp(G.pres+5)}
+  else{G.next={club:{n:o.club.n,l:o.club.l,c:o.club.c},sal:o.sal};m=`Accord avec ${o.club.n} (${WORLD[o.club.c].n}) : ${fmt(o.sal)}/an. Tu les rejoindras en fin de saison.`;G.form=clamp(G.form+3)}
+  if(comm)m+=` Ton agent prélève ${fmt(comm)}.`;
+  addLog(m);const a=snap();G.offers=[];
+  setMain(`<div><button class="btn" id="go">Continuer</button></div><p class="txt">${pref+m}</p><div class="chips">${chips(b,a)}</div>`);
+  $("#go").onclick=G.forced?()=>{applyNext();G.forced=false;G.banned=false;beginSeason()}:nextStep;render()}
+const AGENTS=[{n:"Agent débutant",c:.03,s:0,d:"Peu cher, peu influent"},{n:"Agent expérimenté",c:.06,s:.08,d:"Bon carnet d'adresses"},{n:"Super-agent",c:.10,s:.16,d:"Redoutable négociateur"}];
+const DEMANDS=[{l:"+10 %",v:.10},{l:"+25 %",v:.25},{l:"+50 %",v:.50},{l:"+100 % (folie)",v:1}];
+function negoP(){const o=G.offers[NEGO.i];return clamp(.92-DEMANDS[NEGO.d].v*.9+AGENTS[NEGO.a].s+(G.rep-50)/400+(G.ovr-o.club.l)/120,.05,.95)}
+function openNego(i){NEGO={i,a:1,d:1};renderNego()}
+function renderNego(){
+  const o=G.offers[NEGO.i],p=negoP(),lab=p>.75?"Élevées":p>.5?"Correctes":p>.25?"Faibles":"Quasi nulles";
+  let h=`<span class="tag">🤝 Négociation</span><div><button class="btn" onclick="doNego()">Lancer la négociation</button><button class="btn ghost" onclick="renderOffers()">Retour</button></div>
+  <h2>${WORLD[o.club.c].f} ${o.club.n}</h2><p class="txt">Offre : <b>${fmt(o.sal)}</b>/an. Plus tu demandes, plus le club risque de se retirer. Chances : <b>${lab}</b></p><h3>Ton agent</h3><div class="opts">`;
+  AGENTS.forEach((a,k)=>h+=`<button class="opt ${NEGO.a===k?"sel":""}" onclick="NEGO.a=${k};renderNego()"><b>${a.n}</b><br><small>${a.d} · commission ${Math.round(a.c*100)} %</small></button>`);
+  h+=`</div><h3>Ta demande</h3><div class="opts">`;
+  DEMANDS.forEach((d,k)=>h+=`<button class="opt ${NEGO.d===k?"sel":""}" onclick="NEGO.d=${k};renderNego()"><b>${d.l}</b><br><small>${fmt(o.sal*(1+d.v))}/an</small></button>`);
+  setMain(h+"</div>")}
+function doNego(){
+  const o=G.offers[NEGO.i],a=AGENTS[NEGO.a],d=DEMANDS[NEGO.d];
+  if(Math.random()<negoP()){o.sal=Math.round(o.sal*(1+d.v)/1000)*1000;o.bonus=Math.round(o.sal*(o.renew?.15:.35)/1000)*1000;accept(NEGO.i,Math.round(o.sal*a.c),"🤝 Négociation réussie ! ")}
+  else{const nom=o.club.n;G.offers.splice(NEGO.i,1);G.rep=clamp(G.rep-1);addLog(`${nom} retire son offre.`);
+    setMain(`<div><button class="btn" id="go">Continuer</button></div><p class="txt">${nom} juge tes exigences excessives et retire son offre.</p>`);
+    $("#go").onclick=()=>G.offers.length?renderOffers():(G.forced?forcedMarket():skipMarket())}}
+function applyNext(){
+  if(!G.next)return;
+  const nc=WORLD[G.next.club.c].clubs.find(x=>x.n===G.next.club.n),old=G.club;
+  if(nc.c!==old.c){G.fam=clamp(G.fam-4);if(G.partner)G.couple=clamp(G.couple-5)}
+  G.club={n:nc.n,l:nc.l,c:nc.c,d:divOf(nc)};G.salary=G.next.sal;G.form=clamp(G.form+6);G.rep=clamp(G.rep+Math.max(0,nc.l-old.l)/4);
+  G.coach=60;G.pres=60;addLog(`Nouveau club : ${nc.n}.`);G.next=null}
+function nextSeason(){if(G.forced)return forcedMarket();applyNext();beginSeason()}
+
+/* mercato des autres clubs + évolution des niveaux */
+function aiMercato(){
+  const all=Object.values(WORLD).flatMap(w=>w.clubs),news=[];
+  all.forEach(c=>{const k=c.c+":"+c.n,off=clamp((G.off[k]||0)*.7+rnd(-2,2),-6,6);G.off[k]=Math.round(off*10)/10;c.l=clamp(Math.round(c.l0+off),30,93)});
+  const top=all.filter(c=>divOf(c)===1).sort((a,b)=>b.l-a.l).slice(0,30);
+  for(let i=0;i<8;i++){
+    const buy=pick(top),sell=pick(all.filter(c=>c.n!==buy.n&&divOf(c)===1&&c.l<buy.l&&c.l>buy.l-18));if(!sell)continue;
+    const star=pick(FN)+" "+pick(LN),fee=ri(15,150);
+    buy.l=Math.min(93,buy.l+1);sell.l=Math.max(30,sell.l-1);
+    G.off[buy.c+":"+buy.n]=(G.off[buy.c+":"+buy.n]||0)+1;G.off[sell.c+":"+sell.n]=(G.off[sell.c+":"+sell.n]||0)-1;
+    news.push(`${star} quitte ${WORLD[sell.c].f} ${sell.n} pour ${WORLD[buy.c].f} ${buy.n} (${fee} M€)`)}
+  G.news=[...news.map(x=>`Saison ${G.season} · ${x}`),...G.news].slice(0,30)}
+
+/* ================= FIN DE SAISON ================= */
+function endSeason(){
+  const s=G.season,c=G.club,w=WORLD[c.c],lg=G.lg,b=snap(),ov0=Math.round(G.ovr),extra=[];
+  lgSimTo(lg.N);[G.cup,G.ct,G.nt].forEach(compFinish);
+  const sorted=sortT(lg.teams),rank=sorted.findIndex(t=>t.n===c.n)+1,nT=sorted.length,mt=lg.teams[lg.me],lgName=lg.d===1?w.d1n:w.d2n;
+  const pt=G.banned?.2:clamp((G.ovr-(c.l-12))/12,.2,1);
+  /* finances */
+  const net=G.salary*.55,cost=40000+G.salary*.05*(1+G.kids*.3+(G.partner?.3:0));let fin=net-cost;
+  G.spons=G.spons.filter(sp=>{if(G.img<25&&Math.random()<.5){extra.push(`📉 ${sp.b} rompt son contrat (image dégradée).`);return false}
+    fin+=sp.amt;sp.yrs--;return sp.yrs>0});
+  const soc=Math.round((G.ig+G.tk)*150);fin+=soc;
+  G.inv.forEach(i=>{const x=INV.find(v=>v.k===i.k),m=x.f(),v=Math.round(i.amt*m);fin+=v;
+    extra.push(`${m>=1?"📈":"📉"} ${x.n} : ${fmt(i.amt)} → ${fmt(v)}`);if(i.k==="acad"&&m>1)G.rep=clamp(G.rep+2)});
+  G.inv=[];G.assets.forEach(a=>{a.v=Math.round(a.v*(1+a.g))});G.money+=fin;
+  /* titres */
+  if(rank===1){trophy(lgName,lg.d===1?5:3);extra.push(`🏆 Champion de ${lgName} !`)}
+  /* promotions / relégations dans le pays */
+  const seed=d=>hash(c.c+":"+d+":"+s);let up=[],down=[];
+  if(lg.d===1){down=sorted.slice(-2).map(t=>t.n);up=seededTable(c.c,2,null,seed(2)).slice(0,2).map(t=>t.n)}
+  else{up=sorted.slice(0,2).map(t=>t.n);down=seededTable(c.c,1,null,seed(1)).slice(-2).map(t=>t.n)}
+  up.forEach(n=>G.div[c.c+":"+n]=1);down.forEach(n=>G.div[c.c+":"+n]=2);
+  if(up.includes(c.n)){G.club={...c,d:1};extra.push(`⬆️ Promotion en ${w.d1n} !`)}
+  if(down.includes(c.n)){G.club={...c,d:2};extra.push(`⬇️ Relégation en ${w.d2n}…`)}
+  /* qualification continentale */
+  let qual=null;
+  if(lg.d===1){const sl=slots(c.c);if(rank<=sl.m)qual="m";else if(sl.s&&rank<=sl.m+sl.s)qual="s";else if(sl.t&&rank<=sl.m+sl.s+sl.t)qual="t"}
+  if(G.cup.won&&(!qual||qual==="t")&&COMPS[w.k].s)qual="s";
+  G.cont=qual;if(qual)extra.push(`🌍 Qualifié pour ${COMPS[w.k][qual]} la saison prochaine !`);
+  /* relations */
+  if(!G.banned){const good=rank<=Math.ceil(nT/3),bad=rank>nT*2/3;G.coach=clamp(G.coach+(good?6:bad?-6:0));G.pres=clamp(G.pres+(good?6:bad?-6:0))}
+  /* distinctions */
+  const goals=G.sGoals,assists=G.sAssists,ps=G.ovr+goals*.3+assists*.15+G.sPts*.8+(c.d===1?0:-6),riv=()=>Math.max(...[1,2,3,4,5].map(()=>rnd(80,94))),aw=[];
+  if(G.ovr>=80&&G.rep>=70&&ps>riv()){G.aw.bd++;aw.push("🥇 Ballon d'Or")}
+  if(G.ovr>=78&&G.rep>=65&&ps+rnd(-2,2)>riv()){G.aw.tb++;aw.push("⭐ FIFA The Best")}
+  if(w.k==="EU"&&lg.d===1&&goals*(RANK[c.c]<5?2:RANK[c.c]<9?1.5:1)>rnd(58,82)){G.aw.sd++;aw.push("👟 Soulier d'Or")}
+  if(G.age<=21&&G.ovr>=72&&ps>rnd(76,88)){G.aw.kopa++;aw.push("🌟 Trophée du meilleur jeune (Kopa)")}
+  if(G.age<=21&&w.k==="EU"&&G.ovr>=70&&ps>rnd(74,86)){G.aw.gb++;aw.push("🏆 Golden Boy")}
+  if(G.age<=23&&ps>rnd(65,80)){G.aw.yp++;aw.push("🌱 Meilleur jeune du championnat")}
+  aw.forEach(x=>{G.rep=clamp(G.rep+3);extra.push(x)});
+  /* progression */
+  const base=G.age<=20?3.2:G.age<=23?2.2:G.age<=27?.8:G.age<=30?-.3:G.age<=33?-1.5:-2.5;
+  let d=base*(.6+.4*pt)+(G.form-55)/50+rnd(-.7,.7)+clamp((c.l-G.ovr)/25,-.5,1);if(G.ovr>=G.pot&&d>0)d*=.3;
+  G.ovr=clamp(G.ovr+d,40,99);G.peak=Math.max(G.peak,Math.round(G.ovr));
+  const tgt=clamp(G.ovr+goals/3+G.sTitles.length*5+aw.length*4-6,0,100);G.rep=clamp(G.rep+(tgt-G.rep)*.3);
+  G.form=clamp(G.form+(70-G.form)*.5);if(G.partner)G.couple=clamp(G.couple-3);G.fam=clamp(G.fam-2);
+  G.ig+=Math.round((G.rep*rnd(3,8)+goals*4+G.sTitles.length*60)*(G.img/60));G.tk+=Math.round((G.rep*rnd(3,9)+goals*4+G.sTitles.length*50)*(G.img/60));
+  G.img=clamp(G.img+(60-G.img)*.2+(G.sTitles.length?4:0));
+  if(!G.summit&&Math.round(G.ovr)>=90&&G.rep>=90){G.summit=true;extra.push("🏔️ Tu as atteint le sommet du football mondial !")}
+  if(G.secret>0&&Math.random()<clamp(.2+.2*G.secret,0,.8)){scandal();extra.push("💥 La presse révèle ton infidélité !")}
+  checkOut();
+  aiMercato();
+  G.age++;G.season++;G.act=3;
+  G.hist.push(`Saison ${s} (${c.n}) : ${rank}e en ${lgName}, ${goals} buts${G.sTitles.length?", "+G.sTitles.join(", "):""}`);
+  addLog(`Fin de saison : ${rank}e, ${goals} buts, ${G.sTitles.length} titre(s).`);
+  const a=snap(),fi=G.form<=0||G.money<-2e6||G.ovr<=46||G.age>=39;
+  const ntRow=G.nt?`<tr><td>${G.nt.name}</td><td>${G.ntInfo}${G.nt.alive||G.nt.won||G.nt.out?" · "+cres(G.nt):""}</td></tr>`:"";
+  let h=`<span class="tag">📅 Bilan</span><div>${fi?`<button class="btn" onclick="finish(G.form<=0?'blessure':G.money<-2e6?'ruine':'retraite')">Voir ma fin de carrière</button>`:`<button class="btn" onclick="nextSeason()">Saison suivante ▶</button>${G.age>=33?`<button class="btn ghost" onclick="finish('retraite')">Prendre ma retraite</button>`:""}`}</div>
+  <h2>Fin de la saison ${s}</h2>
+  <table><tr><td>Club</td><td>${w.f} ${c.n}</td></tr>
+  <tr><td>${lgName}</td><td>${rank}e / ${nT} · ${mt.pts} pts (${mt.w}V ${mt.d}N ${mt.lo}D)</td></tr>
+  <tr><td>${G.cup.name}</td><td>${cres(G.cup)}</td></tr>
+  <tr><td>Compétition continentale</td><td>${G.ct?G.ct.name+" : "+cres(G.ct):"Non qualifié"}</td></tr>${ntRow}
+  <tr><td>Buts / passes décisives</td><td>${goals} / ${assists}</td></tr>
+  <tr><td>Niveau</td><td>${ov0} → ${Math.round(G.ovr)}</td></tr>
+  <tr><td>Revenus nets (salaire, sponsors, réseaux)</td><td>${fmt(fin)}</td></tr></table>
+  ${extra.map(x=>`<div class="ln sys">${x}</div>`).join("")}<div class="chips">${chips(b,a)}</div>`;
+  setMain(h);render();
+}
+
+/* ================= FIN DE CARRIÈRE ================= */
+function finish(reason){
+  try{localStorage.removeItem("fl_save2")}catch(e){}
+  const nw=netWorth(),score=Math.round(G.peak*3+G.trophies*6+G.aw.bd*35+G.aw.tb*20+G.aw.sd*15+G.aw.kopa*5+G.aw.gb*5+G.rep+G.fam/2+(G.partner?G.couple/2:0)+Math.max(0,nw)/2e6);
+  const v=score>=650?"Légende absolue 👑":score>=480?"Superstar mondiale ⭐":score>=350?"Grand joueur 🔥":score>=250?"Bonne carrière 👍":"Carrière modeste";
+  const mo={retraite:"Tu raccroches les crampons.",blessure:"Une blessure met brutalement fin à ta carrière.",ruine:"Tes dettes t'obligent à tout arrêter."}[reason];
+  setMain(`<span class="tag">🏁 Fin de carrière</span><div><button class="btn" onclick="location.reload()">Rejouer</button></div><h2>${G.name} ${G.flag}</h2><p class="txt">${mo}</p><p class="big-title">${v}</p>
+  <table><tr><td>Score final</td><td>${score}</td></tr><tr><td>Meilleur niveau</td><td>${G.peak}</td></tr><tr><td>Trophées</td><td>🏆 ${G.trophies}</td></tr>
+  <tr><td>Ballons d'Or / Souliers d'Or / The Best</td><td>${G.aw.bd} / ${G.aw.sd} / ${G.aw.tb}</td></tr><tr><td>Buts en carrière</td><td>${G.cg}</td></tr>
+  <tr><td>Patrimoine</td><td>${fmt(nw)}</td></tr><tr><td>Famille</td><td>${G.partner?(G.partner==="marié"?"Marié":"En couple"):"Célibataire"}${G.kids?` · ${G.kids} enfant(s)`:""}</td></tr>
+  <tr><td>Sommet atteint</td><td>${G.summit?"Oui 🏔️":"Non"}</td></tr></table>`);render()}
+
+/* ================= AFFICHAGE ================= */
+const bar=(l,v,col)=>`<div class="stat"><div class="sl"><span>${l}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${v}%;background:${col}"></i></div></div>`;
+function render(){
+  const w=WORLD[G.club.c],lg=G.lg;
+  $("#hud").innerHTML=`<div class="id"><div class="flag">${G.flag}</div><div><h2>${G.name}</h2>
+  <p>${POS[G.pos]} · ${G.age} ans · Saison ${G.season} · Sél. ${G.natTeam}${G.banned?" · 🚫 écarté du groupe":""}</p>
+  <p>${w.f} ${G.club.n} · ${G.club.d===1?w.d1n:w.d2n}${lg?` · J${lg.md}/${lg.N}`:""}</p>
+  <p>🌍 ${G.cont?COMPS[w.k][G.cont]:"Pas de compétition continentale cette saison"}</p></div></div>
+  <div class="stats">
+   <div class="stat big"><span>Niveau</span><b>${Math.round(G.ovr)}</b></div>
+   ${bar("Forme",G.form,"var(--blue)")}${bar("Réputation",G.rep,"var(--gold)")}${bar("Image",G.img,"#c77dff")}
+   ${G.partner?bar(G.partner==="marié"?"Mariage":"Couple",G.couple,"#ff7ab0"):`<div class="stat"><div class="sl"><span>Couple</span><b>Célibataire</b></div></div>`}
+   ${bar("Famille"+(G.kids?` (${G.kids} 👶)`:""),G.fam,"var(--acc)")}
+   <div class="stat big"><span>Argent</span><b>${fmt(G.money)}</b></div>
+   <div class="stat big"><span>Salaire / an</span><b>${fmt(G.salary)}</b></div>
+   <div class="stat big"><span>Coach · Président</span><b>${Math.round(G.coach)} · ${Math.round(G.pres)}</b></div>
+   <div class="stat big"><span>Réseaux</span><b>📸 ${fmtK(G.ig)} · 🎵 ${fmtK(G.tk)}</b></div>
+   <div class="stat big"><span>Palmarès</span><b>🏆 ${G.trophies} · 🥇 ${G.aw.bd} · 👟 ${G.aw.sd} · ⭐ ${G.aw.tb}</b></div>
+  </div>`;
+  $("#log").innerHTML=G.log.slice(-8).reverse().map(x=>`<li>${x}</li>`).join("")}
+
+/* ================= FENÊTRE : classements, finances, réseaux, vie privée… ================= */
+function tblHTML(ts,zf,me){let h=`<table class="lt"><tr><th>#</th><th>Club</th><th>J</th><th>V</th><th>N</th><th>D</th><th>Diff</th><th>Pts</th></tr>`;
+  ts.forEach((t,i)=>{h+=`<tr class="${t.n===me?"me ":""}${zf(i)}"><td>${i+1}</td><td>${t.n}</td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.lo}</td><td>${t.gf-t.ga}</td><td><b>${t.pts}</b></td></tr>`});
+  return h+"</table>"}
+function zoneFn(cid,d,n){const sl=slots(cid),m=sl.m||0,s=sl.s||0,t=sl.t||0;return i=>d===1?(i<m?"z-m":i<m+s?"z-s":i<m+s+t?"z-t":i>=n-2?"z-rel":""):(i<2?"z-pro":"")}
+function compHTML(C,empty){
+  if(!C)return `<p class="txt">${empty}</p>`;
+  const me=(C.teams.find(t=>t.me)||{}).n;let h=`<h3>${C.name}</h3>`;
+  if(C.groups)C.groups.forEach((gr,g)=>{h+=`<p class="mstat">Groupe ${"ABCD"[g]}</p>`+tblHTML(sortT(gr.map(i=>C.teams[i])),i=>i<2?"z-m":"",me)});
+  h+=C.log.length?C.log.map(x=>`<div class="ln">${x}</div>`).join(""):`<p class="txt">Aucun match joué pour l'instant.</p>`;
+  h+=C.done?`<p class="txt">🏆 Vainqueur : <b>${C.teams[C.cur[0]].n}</b></p>`:!C.alive?`<p class="txt">Tu n'es pas/plus engagé dans cette compétition.</p>`:`<p class="txt">Prochaine étape : ${C.stage==="G"?`Groupe · J${C.gr+1}`:rname(C.cur.length)}</p>`;
+  return h}
+const ACTS=[
+ {t:"🎁 Offrir un cadeau à ta partenaire",c:g=>g.partner,run:()=>[{sal:-.03,couple:8},"Elle est ravie de ton attention."]},
+ {t:"🏖️ Partir en vacances en amoureux",c:g=>g.partner,run:()=>[{sal:-.05,couple:12,form:4},"Des vacances de rêve : vous êtes plus proches que jamais."]},
+ {t:"👪 Rendre visite à ta famille",c:g=>1,run:()=>[{fam:9,form:2},"Un moment de bonheur en famille."]},
+ {t:"💍 Demander ta partenaire en mariage",c:g=>g.partner==="couple"&&g.couple>=55,run:()=>[{partner:"marié",sal:-.08,couple:15,rep:2,fam:5},"Elle dit OUI ! Mariage célébré."]},
+ {t:"👶 Avoir un enfant avec ta partenaire",c:g=>g.partner&&g.kids<4,run:()=>G.couple<40?[{couple:-5},"Elle estime que ce n'est pas le bon moment pour votre couple."]:[{kids:1,fam:14,couple:8,form:-3,sal:-.02},"Un bébé est né ! Les nuits sont courtes mais le bonheur est immense."]},
+ {t:"🎉 Organiser une soirée entre amis",c:g=>1,run:()=>[{sal:-.02,form:-3,img:1},"Une bonne soirée sans histoire."]},
+ {t:"🍾 Organiser une grosse soirée VIP",c:g=>1,run:()=>Math.random()<.7?[{sal:-.05,rep:2,img:3,form:-6},"Soirée incroyable, ton réseau s'agrandit !"]:[{sal:-.05,img:-14,rep:-3,form:-6,coach:-6},"Des vidéos de la soirée fuitent : bad buzz !"]},
+ {t:"💋 Soirée VIP… et tromper ta partenaire (très risqué)",c:g=>g.partner,run:()=>Math.random()<.2?[{form:-4,secret:1,scandal:1},"Un paparazzi te photographie : c'est le scandale !"]:[{form:-4,secret:1},"Personne ne t'a vu… pour l'instant. Si ça se sait, les conséquences seront terribles."]}
+];
+const SOC=[
+ {t:"📸 Poster une photo sur Instagram",run:()=>[{ig:Math.round(rnd(3,10)+G.rep/3),img:1},"Ta photo plaît à tes abonnés."]},
+ {t:"🎵 Tenter une vidéo TikTok virale",run:()=>Math.random()<.5?[{tk:Math.round(rnd(40,160)+G.rep),img:3},"La vidéo devient virale !"]:[{tk:ri(1,8)},"La vidéo fait un flop."]},
+ {t:"🎤 Faire un live avec les fans",run:()=>[{ig:ri(5,15),tk:ri(5,15),img:3,form:-1},"Les fans adorent ce moment de proximité."]},
+ {t:"🔥 Clash avec un rival sur les réseaux",run:()=>Math.random()<.5?[{ig:ri(30,100),tk:ri(30,100),img:-5,rep:1},"Le clash fait le buzz : beaucoup d'abonnés en plus !"]:[{img:-16,rep:-4,ig:-20},"Le clash tourne mal : bad buzz et abonnés perdus."]},
+ {t:"🤝 Publier un post sponsorisé",run:()=>[{money:Math.round((G.ig+G.tk)*15),img:-1},"Un joli cachet pour un post."]}
+];
+function doAct(kind,i){
+  const A=(kind==="vie"?ACTS:SOC)[i];
+  if(G.act<=0){G.msg="Plus d'actions disponibles cette saison.";return renderModal()}
+  G.act--;const r=A.run();applyFx(r[0]);G.msg=r[1];addLog(r[1]);checkOut();render();renderModal()}
+const shopCost=c=>Math.round(Math.max(c*G.salary,c*150000)/1000)*1000;
+function buy(id){
+  const s=SHOP.find(x=>x.id===id),cost=shopCost(s.c);
+  if(G.money<cost){G.msg="Tu n'as pas assez d'argent.";return renderModal()}
+  G.money-=cost;applyFx(s.fx);if(s.as)G.assets.push({n:s.as[0],v:cost*.9,g:s.as[1]});
+  G.msg=`Achat : ${s.n} (${fmt(cost)}).`;addLog(G.msg);checkOut();render();renderModal()}
+function invest(k,p){
+  const amt=Math.round(G.money*p/1000)*1000;
+  if(amt<=0){G.msg="Tu n'as pas assez d'argent.";return renderModal()}
+  G.money-=amt;G.inv.push({k,amt});G.msg=`Tu investis ${fmt(amt)} dans « ${INV.find(x=>x.k===k).n} ». Résultat en fin de saison.`;addLog(G.msg);render();renderModal()}
+const TAB={
+ lg:()=>{const lg=G.lg,w=WORLD[G.club.c];return `<h3>${w.f} ${lg.d===1?w.d1n:w.d2n} · Journée ${lg.md}/${lg.N}</h3>${tblHTML(sortT(lg.teams),zoneFn(G.club.c,lg.d,lg.teams.length),G.club.n)}<p class="mstat">Barre verte : compétition continentale principale · bleue : secondaire · jaune : 3e compétition · rouge : relégation · verte (2e division) : promotion</p>
+  <h3>Coupe nationale</h3>${compHTML(G.cup,"")}`},
+ cup:()=>compHTML(G.cup,"Pas de coupe."),
+ ct:()=>G.ct?compHTML(G.ct,""):(()=>{const sl=slots(G.club.c),cm=COMPS[WORLD[G.club.c].k];return `<p class="txt">Tu n'es pas qualifié cette saison. Dans ton championnat (1re division) : ${sl.m} place(s) en ${cm.m}${sl.s?`, ${sl.s} en ${cm.s}`:""}${sl.t?`, ${sl.t} en ${cm.t}`:""}. Le vainqueur de la coupe nationale accède à ${cm.s||cm.m}.</p>`})(),
+ nt:()=>{const up=[];for(let y=2026+G.season;y<2026+G.season+8;y++)ntComps(y).forEach(c=>up.push(`${y} : ${c.n}`));
+  return `<p class="txt">Sélection : <b>${NTM[G.natTeam].f} ${G.natTeam}</b>${G.ntInfo?" · "+G.ntInfo:""}</p>`+compHTML(G.nt,"Pas de tournoi international cette saison.")+`<h3>Prochains tournois</h3><p class="txt">${up.join(" · ")||"—"}</p>`},
+ wd:()=>{if(!WDc)WDc=G.club.c;const w=WORLD[WDc];
+  let h=`<div class="form"><select onchange="WDc=this.value;renderModal()">${Object.values(WORLD).map(x=>`<option value="${x.id}" ${x.id===WDc?"selected":""}>${x.f} ${x.n}</option>`).join("")}</select><select onchange="WDd=+this.value;renderModal()"><option value="1" ${WDd===1?"selected":""}>${w.d1n}</option><option value="2" ${WDd===2?"selected":""}>${w.d2n}</option></select></div>`;
+  const mine=WDc===G.club.c&&WDd===G.lg.d,ts=mine?sortT(G.lg.teams):seededTable(WDc,WDd,G.lg.md,hash(WDc+":"+WDd+":"+G.season));
+  return h+`<h3>${w.f} ${WDd===1?w.d1n:w.d2n} · Journée ${G.lg.md}${mine?"":" (classement simulé)"}</h3>`+tblHTML(ts,zoneFn(WDc,WDd,ts.length),G.club.n)},
+ fin:()=>`<p class="txt">💶 Trésorerie : <b>${fmt(G.money)}</b> · Patrimoine total : <b>${fmt(netWorth())}</b></p>
+  <h3>Investir (résultat à la fin de la saison — certains placements peuvent tout faire perdre)</h3>
+  ${INV.map(x=>`<div class="offer"><div><b>${x.n}</b><br><small>${x.d}</small></div><div>${[.1,.25,.5].map(p=>`<button class="btn small" onclick="invest('${x.k}',${p})">${p*100} %</button>`).join("")}</div></div>`).join("")}
+  ${G.inv.length?`<p class="mstat">En cours : ${G.inv.map(i=>INV.find(x=>x.k===i.k).n+" "+fmt(i.amt)).join(" · ")}</p>`:""}
+  <h3>Dépenser</h3>${SHOP.map(s=>`<div class="offer"><div><b>${s.n}</b><br><small>${fmt(shopCost(s.c))}</small></div><button class="btn small alt" onclick="buy('${s.id}')">Acheter</button></div>`).join("")}
+  ${G.assets.length?`<h3>Tes biens</h3><p class="txt">${G.assets.map(a=>`${a.n} (${fmt(a.v)})`).join(" · ")}</p>`:""}`,
+ soc:()=>`<p class="txt">📸 Instagram : <b>${fmtK(G.ig)}</b> · 🎵 TikTok : <b>${fmtK(G.tk)}</b> · Image publique : <b>${Math.round(G.img)}/100</b></p>
+  <h3>Sponsors & publicités</h3><p class="txt">${G.spons.length?G.spons.map(s=>`${s.b} (${fmt(s.amt)}/an · ${s.yrs} an(s))`).join(" · "):"Aucun contrat pour l'instant : les marques (Nike, Adidas, Puma…) te contactent quand ta réputation augmente."}</p>
+  <h3>Publier (actions restantes cette saison : ${G.act})</h3><div class="choices">${SOC.map((a,i)=>`<button class="choice" onclick="doAct('soc',${i})" ${G.act<=0?"disabled":""}>${a.t}</button>`).join("")}</div>`,
+ vie:()=>`<p class="txt">💞 ${G.partner?(G.partner==="marié"?"Marié":"En couple")+" · relation "+Math.round(G.couple)+"/100":"Célibataire"} · 👶 ${G.kids} enfant(s)</p><h3>Actions de vie (restantes cette saison : ${G.act})</h3>
+  <div class="choices">${ACTS.map((a,i)=>a.c(G)?`<button class="choice" onclick="doAct('vie',${i})" ${G.act<=0?"disabled":""}>${a.t}</button>`:"").join("")}</div>`,
+ pal:()=>`<h3>Distinctions</h3><table><tr><td>🥇 Ballon d'Or</td><td>${G.aw.bd}</td></tr><tr><td>👟 Soulier d'Or</td><td>${G.aw.sd}</td></tr><tr><td>⭐ FIFA The Best</td><td>${G.aw.tb}</td></tr><tr><td>🌟 Trophée Kopa (meilleur jeune)</td><td>${G.aw.kopa}</td></tr><tr><td>🏆 Golden Boy</td><td>${G.aw.gb}</td></tr><tr><td>🌱 Meilleur jeune du championnat</td><td>${G.aw.yp}</td></tr><tr><td>🎖️ Hommes du match</td><td>${G.motm}</td></tr><tr><td>Buts / passes décisives en carrière</td><td>${G.cg} / ${G.ca}</td></tr></table>
+  <h3>Trophées</h3><table>${Object.entries(G.cab).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")||"<tr><td>Aucun trophée pour l'instant</td><td></td></tr>"}</table>
+  <h3>Saisons</h3>${G.hist.slice().reverse().map(x=>`<div class="ln">${x}</div>`).join("")||"<p class='txt'>—</p>"}`,
+ mer:()=>`<h3>Mercato mondial</h3>${G.news.length?G.news.map(x=>`<div class="ln">${x}</div>`).join(""):"<p class='txt'>Le mercato des autres clubs a lieu à la fin de chaque saison.</p>"}`
+};
+function openTab(t){if(t&&t!==MT){MT=t;G.msg=""}$("#modal").hidden=false;document.body.style.overflow="hidden";renderModal()}
+function closeModal(){$("#modal").hidden=true;document.body.style.overflow=""}
+function renderModal(){
+  const md=$("#modal"),sc=md.scrollTop,tabs=[["lg","📊 Championnat"],["cup","🏆 Coupe"],["ct","🌍 Continental"],["nt","🌐 Sélection"],["wd","🗺️ Monde"],["fin","💰 Finances"],["soc","📱 Réseaux"],["vie","💞 Vie privée"],["pal","🏅 Palmarès"],["mer","🔄 Mercato"]];
+  md.innerHTML=`<div class="mbox"><div class="mh"><div class="tabs">${tabs.map(([k,l])=>`<button class="tb ${MT===k?"on":""}" onclick="openTab('${k}')">${l}</button>`).join("")}</div><button class="btn small ghost" onclick="closeModal()">✖ Fermer</button></div>${G.msg?`<div class="ln sys">${G.msg}</div>`:""}<div>${TAB[MT]()}</div></div>`;
+  md.scrollTop=sc}
+
+/* ================= DÉMARRAGE ================= */
+function buildStart(){
+  $("#players").innerHTML=PLAYERS.map((p,i)=>`<div class="pcard" onclick="newGame(${i})"><div class="fl">${p.flag}</div><h4>${p.name}</h4><small>${p.nat} · ${p.age} ans</small>
+   <div class="pt"><span class="pill">${POS[p.pos]}</span><span class="pill">Niveau ${p.ovr}</span><span class="pill">Potentiel ${p.pot}</span></div><small>${p.bio}</small><small style="margin-top:6px">Débute en ${WORLD[p.cc].d2n} (${WORLD[p.cc].n})</small><small>Sélection : ${p.natTeam||p.nat}</small></div>`).join("");
+  $("#cnat").innerHTML=NTS.map(x=>`<option value="${x.n}">${x.f} ${x.n}</option>`).join("");
+  let saved=null;try{saved=JSON.parse(localStorage.getItem("fl_save2"))}catch(e){}
+  if(saved&&saved.v===2)$("#resume").innerHTML=`<button class="btn alt" onclick="loadGame()">▶ Reprendre : ${saved.name} (Saison ${saved.season})</button>`}
+function ccFor(nat){const w=Object.values(WORLD).find(x=>x.n===nat);if(w)return w.id;const k=NTM[nat].k,arr=Object.values(WORLD).filter(x=>x.k===k);return arr.length?pick(arr).id:"FR"}
+function createPlayer(){
+  const name=($("#cn").value||"Joueur Inconnu").replace(/[<>&"]/g,"").trim()||"Joueur Inconnu",nat=$("#cnat").value;
+  startWith({name,nat,natTeam:nat,flag:NTM[nat].f,pos:$("#cpos").value,age:17,ovr:61,pot:ri(86,93),cc:ccFor(nat)})}
+function newGame(i){startWith(PLAYERS[i])}
+function startWith(P){
+  Object.values(WORLD).forEach(w=>w.clubs.forEach(c=>c.l=c.l0));
+  const d2=WORLD[P.cc].clubs.filter(c=>c.d===2).sort((a,b)=>b.l-a.l),cl=d2[ri(0,Math.min(3,d2.length-1))];
+  G={v:2,name:P.name,nat:P.nat,natTeam:P.natTeam||P.nat,flag:P.flag,pos:P.pos,age:P.age,ovr:P.ovr,pot:P.pot,club:{n:cl.n,l:cl.l,c:cl.c,d:2},
+   form:75,rep:12,img:60,coach:60,pres:60,couple:0,fam:70,partner:null,kids:0,secret:0,money:15000,salary:0,season:1,trophies:0,
+   aw:{bd:0,sd:0,tb:0,kopa:0,gb:0,yp:0},motm:0,peak:P.ovr,seen:[],queue:[],evs:[],log:[],hist:[],summit:false,offers:[],div:{},off:{},cab:{},cg:0,ca:0,
+   cont:null,next:null,sGoals:0,sAssists:0,sTitles:[],sPts:0,lg:null,cup:null,ct:null,nt:null,ntInfo:null,
+   ig:12,tk:8,spons:[],assets:[],inv:[],news:[],act:3,msg:"",tmp:null,banned:false,forced:false,auto:false,autoLog:[]};
+  G.salary=salaryFor(G.ovr,G.club);
+  $("#start").hidden=true;$("#game").hidden=false;
+  addLog(`Tu débutes ta carrière à ${G.club.n} (${WORLD[G.club.c].d2n}).`);beginSeason()}
+function loadGame(){
+  try{G=JSON.parse(localStorage.getItem("fl_save2"))}catch(e){return}
+  if(!G||G.v!==2)return;
+  Object.values(WORLD).forEach(w=>w.clubs.forEach(c=>{c.l=clamp(Math.round(c.l0+(G.off[c.c+":"+c.n]||0)),30,93)}));
+  G.auto=false;G.autoLog=[];
+  $("#start").hidden=true;$("#game").hidden=false;addLog("Partie reprise.");render();nextStep()}
+buildStart();
+</script>
+</body>
+</html>
